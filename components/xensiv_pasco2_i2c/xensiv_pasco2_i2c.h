@@ -25,3 +25,4 @@ namespace esphome
             sensor::Sensor *test_sensor_{nullptr};
         };
     }
+}
