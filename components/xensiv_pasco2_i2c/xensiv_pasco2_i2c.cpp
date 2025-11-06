@@ -1,5 +1,5 @@
 #include "esphome/core/log.h"
-#include "my_external_component.h"
+#include "xensiv_pasco2_i2c.h"
 
 namespace esphome
 {
