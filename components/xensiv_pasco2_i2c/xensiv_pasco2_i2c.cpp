@@ -40,13 +40,23 @@ namespace esphome
         void XensivPasCO2I2C::read_co2_ppm()
         {
             // Placeholder for reading CO2 ppm from the sensor
-            // Read 2 bytes (MSB and LSB) from registers 0x5 and 0x6 in a single I2C transaction
-            uint8_t data[2] = {0};
-            if (this->read_bytes(0x5, data, 2)) {
-                int16_t co2_raw = (static_cast<int16_t>(data[0]) << 8) | data[1];
-                this->co2_ppm_ = static_cast<float>(co2_raw);
+            // Try reading 8 bytes starting from register 0x0 for debugging
+            uint8_t debug_data[8] = {0};
+            if (this->read_bytes(0x0, debug_data, 8)) {
+                ESP_LOGD(TAG, "I2C raw data:");
+                for (int i = 0; i < 8; ++i) {
+                    ESP_LOGD(TAG, "  Byte %d: 0x%02X", i, debug_data[i]);
+                }
+                // Optionally, still try to read CO2 value as before
+                if (this->read_bytes(0x5, data, 2)) {
+                    int16_t co2_raw = (static_cast<int16_t>(data[0]) << 8) | data[1];
+                    this->co2_ppm_ = static_cast<float>(co2_raw);
+                } else {
+                    ESP_LOGW(TAG, "Failed to read CO2 value from sensor");
+                    this->co2_ppm_ = NAN;
+                }
             } else {
-                ESP_LOGW(TAG, "Failed to read CO2 value from sensor");
+                ESP_LOGW(TAG, "Failed to read I2C debug data from sensor");
                 this->co2_ppm_ = NAN;
             }
         }
