@@ -19,6 +19,7 @@ namespace esphome
             void set_co2_sensor(sensor::Sensor *co2_sensor) { co2_sensor_ = co2_sensor; }
 
         protected:
+            float co2_ppm_{0};
             sensor::Sensor *co2_sensor_{nullptr};
             uint16_t version_{0};
         };
