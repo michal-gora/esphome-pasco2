@@ -16,7 +16,7 @@ namespace esphome
                 ESP_LOGW(TAG, "CO2 sensor not configured");
                 return;
             }
-            this->co2_ppm_ = 0;
+            this->co2_ppm_ = 42.0;
         }
 
         void XensivPasCO2I2C::update()
@@ -46,7 +46,7 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "XensivPasCO2I2C Component:");
             ESP_LOGCONFIG(TAG, " Firmware Version: 0x%04X", this->version_);
-            LOG_I2C_DEVICE(this);
+            // LOG_I2C_DEVICE(this);
             LOG_UPDATE_INTERVAL(this);
             ESP_LOGCONFIG(TAG, "  Last CO2 Value: %.2f ppm", this->co2_ppm_);
         }
