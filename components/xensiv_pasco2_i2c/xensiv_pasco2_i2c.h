@@ -9,7 +9,7 @@ namespace esphome
     namespace xensiv_pasco2_i2c
     {
 
-        class XensivPasCO2I2C : public sensor::Sensor, public i2c:I2CDevice, public PollingComponent
+        class XensivPasCO2I2C : public sensor::Sensor, public i2c::I2CDevice, public PollingComponent
         {
         public:
             void setup() override;
