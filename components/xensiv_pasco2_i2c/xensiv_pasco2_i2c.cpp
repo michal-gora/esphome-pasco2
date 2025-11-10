@@ -22,13 +22,9 @@ namespace esphome
             // Read CO2 value from I2C sensor
             //     TODO : Replace with actual I2C read operations
             //                Example placeholder : uint16_t co2_ppm = 0;
-            if (this->co2_ppm_ != nullptr)
-            {
-                this->publish_state(this->co2_ppm_);
-                ESP_LOGD(TAG, "Published CO2 value: %.2f ppm", this->co2_ppm_);
-            } else {
-                ESP_LOGW(TAG, "CO2 ppm is null, so not updated");
-            }
+
+            this->publish_state(this->co2_ppm_);
+            ESP_LOGD(TAG, "Published CO2 value: %.2f ppm", this->co2_ppm_);
 
             // For now, publish a dummy value if sensor is configured
             // if (this->co2_sensor_ != nullptr) {
