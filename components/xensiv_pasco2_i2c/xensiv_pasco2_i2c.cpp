@@ -43,11 +43,12 @@ namespace esphome
             // Read 2 bytes (MSB and LSB) from registers 0x5 and 0x6 in a single I2C transaction
             uint8_t data[2] = {0};
             // Try reading 8 bytes starting from register 0x0 for debugging
-            uint8_t debug_data[8] = {0};
-            if (this->read_bytes(0x0, debug_data, 8)) {
+            const size_t debug_bytes_to_read = 17; // Set this variable to change how many bytes to read
+            uint8_t debug_data[debug_bytes_to_read] = {0};
+            if (this->read_bytes(0x0, debug_data, debug_bytes_to_read)) {
                 ESP_LOGD(TAG, "I2C raw data:");
-                for (int i = 0; i < 8; ++i) {
-                    ESP_LOGD(TAG, "  Byte %d: 0x%02X", i, debug_data[i]);
+                for (size_t i = 0; i < debug_bytes_to_read; ++i) {
+                    ESP_LOGD(TAG, "  Byte %zu: 0x%02X", i, debug_data[i]);
                 }
                 // Optionally, still try to read CO2 value as before
                 if (this->read_bytes(0x5, data, 2)) {
