@@ -10,8 +10,13 @@ namespace esphome
         void XensivPasCO2I2C::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
-            // Initialize I2C communication with the sensor
-            // TODO: Add sensor initialization code here
+            // Write 0x25 to MEAS_CFG register (0x04) to enable continuous measurement mode
+            uint8_t meas_cfg_value = 0x25;
+            if (this->write_byte(0x04, meas_cfg_value)) {
+            ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x25)");
+            } else {
+            ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+            }
             this->co2_ppm_ = 42.0;
         }
 
@@ -50,12 +55,27 @@ namespace esphome
                 for (size_t i = 0; i < debug_bytes_to_read; ++i) {
                     ESP_LOGD(TAG, "  Byte %zu: 0x%02X", i, debug_data[i]);
                 }
-                // Optionally, still try to read CO2 value as before
-                if (this->read_bytes(0x5, data, 2)) {
-                    int16_t co2_raw = (static_cast<int16_t>(data[0]) << 8) | data[1];
+                // Check DRDY flag in MEAS_STS (address 0x07, bit 4)
+                uint8_t meas_sts = debug_data[7];
+                bool drdy = (meas_sts & (1 << 4)) != 0;
+                ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X, DRDY: %s", meas_sts, drdy ? "SET" : "NOT SET");
+
+                // Log SENS_STS (address 0x08)
+                uint8_t sens_sts = debug_data[8];
+                ESP_LOGD(TAG, "SENS_STS (0x08): 0x%02X", sens_sts);
+                // SENS_STS is a status register that provides sensor status flags, such as error conditions, calibration status, and other sensor-specific states. Refer to the sensor's datasheet for detailed bit definitions.
+
+                if (drdy) {
+                    // Read CO2PPM_H (0x05) and CO2PPM_L (0x06)
+                    uint8_t co2ppm_h = debug_data[5];
+                    uint8_t co2ppm_l = debug_data[6];
+                    ESP_LOGD(TAG, "CO2PPM_H (0x05): 0x%02X", co2ppm_h);
+                    ESP_LOGD(TAG, "CO2PPM_L (0x06): 0x%02X", co2ppm_l);
+
+                    int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
                     this->co2_ppm_ = static_cast<float>(co2_raw);
                 } else {
-                    ESP_LOGW(TAG, "Failed to read CO2 value from sensor");
+                    ESP_LOGW(TAG, "DRDY not set, CO2 value not ready");
                     this->co2_ppm_ = NAN;
                 }
             } else {
