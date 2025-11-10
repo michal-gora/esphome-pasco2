@@ -33,7 +33,7 @@ XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
 #     # .extend(i2c.i2c_device_schema(0x28))
 # )
 
-CONFIG_SCHEMA = sensor.SENSOR_PLATFORM_SCHEMA.extend(
+CONFIG_SCHEMA = sensor.PLATFORM_SCHEMA.extend(
     {
         cv.GenerateID(): cv.declare_id(XensivPasCO2I2C),
         cv.Optional(CONF_TEST_VALUE): sensor.sensor_schema(
