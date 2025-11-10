@@ -11,9 +11,9 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
             // Write 0x25 to MEAS_CFG register (0x04) to enable continuous measurement mode
-            uint8_t meas_cfg_value = 0x25;
+            uint8_t meas_cfg_value = 0x26;
             if (this->write_byte(0x04, meas_cfg_value)) {
-            ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x25)");
+            ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26)");
             } else {
             ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
             }
