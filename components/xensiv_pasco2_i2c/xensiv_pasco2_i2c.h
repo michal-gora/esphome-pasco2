@@ -15,7 +15,7 @@ namespace esphome
             void setup() override;
             void update() override;
             void dump_config() override;
-            float read_co2_ppm();
+            void read_co2_ppm();
             
             protected:
             float co2_ppm_{0};

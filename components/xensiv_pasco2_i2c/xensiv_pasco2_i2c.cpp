@@ -37,10 +37,10 @@ namespace esphome
             // }
         }
 
-        float XensivPasCO2I2C::read_co2_ppm()
+        void XensivPasCO2I2C::read_co2_ppm()
         {
             // Placeholder for reading CO2 ppm from the sensor
-
+            this->co2_ppm_ = 43;
         }
 
         void XensivPasCO2I2C::dump_config()
