@@ -1,6 +1,6 @@
 import esphome.config_validation as cv
 import esphome.codegen as cg
-from esphome.components import i2c, sensor
+from esphome.components import sensor
 from esphome.const import (
     CONF_ID,
     STATE_CLASS_MEASUREMENT,
@@ -11,7 +11,7 @@ from esphome.const import (
 CODEOWNERS = ["@goram"]
 CONF_TEST_VALUE = "test_value"
 # CONF_CO2 = "co2"
-DEPENDENCIES = ["sensor", "i2c"]
+DEPENDENCIES = ["sensor"]
 
 xensiv_pasco2_i2c_ns = cg.esphome_ns.namespace("xensiv_pasco2_i2c")
 XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(

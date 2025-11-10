@@ -39,14 +39,14 @@ namespace esphome
             // }
             
             // For now, publish a dummy value if sensor is configured
-            if (this->co2_sensor_ != nullptr) {
-                // Placeholder: publish a test value (400-500 ppm range)
-                float dummy_co2 = 400.0f + (test_value_ % 100);
-                this->co2_sensor_->publish_state(dummy_co2);
-                ESP_LOGD(TAG, "Published dummy CO2 value: %.2f ppm", dummy_co2);
-            } else {
-                ESP_LOGW(TAG, "CO2 sensor not configured");
-            }
+            // if (this->co2_sensor_ != nullptr) {
+            //     // Placeholder: publish a test value (400-500 ppm range)
+            //     float dummy_co2 = 400.0f + (test_value_ % 100);
+            //     this->co2_sensor_->publish_state(dummy_co2);
+            //     ESP_LOGD(TAG, "Published dummy CO2 value: %.2f ppm", dummy_co2);
+            // } else {
+            //     ESP_LOGW(TAG, "CO2 sensor not configured");
+            // }
         }
         
         void XensivPasCO2I2C::dump_config()
@@ -55,7 +55,7 @@ namespace esphome
             LOG_I2C_DEVICE(this);
             ESP_LOGCONFIG(TAG, "  Test Value: %u", this->test_value_);
             LOG_UPDATE_INTERVAL(this);
-            ESP_LOGCONFIG(TAG, "  CO2 Sensor: %s", this->co2_sensor_ != nullptr ? "Configured" : "Not Configured");
+            // ESP_LOGCONFIG(TAG, "  CO2 Sensor: %s", this->co2_sensor_ != nullptr ? "Configured" : "Not Configured");
         }
 
     }
