@@ -1,6 +1,6 @@
-import esphome.config_validation as i2c, cv
+import esphome.config_validation as cv
 import esphome.codegen as cg
-from esphome.components import sensor
+from esphome.components import i2c, sensor
 from esphome.const import (
     CONF_ID,
     DEVICE_CLASS_CARBON_DIOXIDE,
