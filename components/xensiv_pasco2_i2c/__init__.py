@@ -18,19 +18,32 @@ XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
     "XensivPasCO2I2C", cg.PollingComponent #, i2c.I2CDevice
 )
 
-CONFIG_SCHEMA = (
-    cv.Schema({
+# Old schema
+# CONFIG_SCHEMA = (
+#     cv.Schema({
+#         cv.GenerateID(): cv.declare_id(XensivPasCO2I2C),
+#         cv.Optional(CONF_TEST_VALUE): sensor.sensor_schema(
+#             state_class=STATE_CLASS_MEASUREMENT,
+#         ),
+#         # cv.Optional(CONF_CO2): sensor.sensor_schema(
+#         #     state_class=STATE_CLASS_MEASUREMENT,
+#         # ),
+#     })
+#     .extend(cv.polling_component_schema("60s"))
+#     # .extend(i2c.i2c_device_schema(0x28))
+# )
+
+CONFIG_SCHEMA = sensor.SENSOR_PLATFORM_SCHEMA.extend(
+    {
         cv.GenerateID(): cv.declare_id(XensivPasCO2I2C),
         cv.Optional(CONF_TEST_VALUE): sensor.sensor_schema(
+            unit=UNIT_PARTS_PER_MILLION,  # Specify the unit of measurement
+            accuracy_decimals=2,         # Optional: Number of decimals
             state_class=STATE_CLASS_MEASUREMENT,
+            device_class=DEVICE_CLASS_CARBON_DIOXIDE,  # Classify sensor as CO2
         ),
-        # cv.Optional(CONF_CO2): sensor.sensor_schema(
-        #     state_class=STATE_CLASS_MEASUREMENT,
-        # ),
-    })
-    .extend(cv.polling_component_schema("60s"))
-    # .extend(i2c.i2c_device_schema(0x28))
-)
+    }
+).extend(cv.polling_component_schema("60s"))
 
 
 async def to_code(config):
