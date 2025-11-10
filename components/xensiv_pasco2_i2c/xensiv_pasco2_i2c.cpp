@@ -40,6 +40,8 @@ namespace esphome
         void XensivPasCO2I2C::read_co2_ppm()
         {
             // Placeholder for reading CO2 ppm from the sensor
+            // Read 2 bytes (MSB and LSB) from registers 0x5 and 0x6 in a single I2C transaction
+            uint8_t data[2] = {0};
             // Try reading 8 bytes starting from register 0x0 for debugging
             uint8_t debug_data[8] = {0};
             if (this->read_bytes(0x0, debug_data, 8)) {
