@@ -12,10 +12,6 @@ namespace esphome
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
             // Initialize I2C communication with the sensor
             // TODO: Add sensor initialization code here
-            if(!this->co2_sensor_) {
-                ESP_LOGW(TAG, "CO2 sensor not configured");
-                return;
-            }
             this->co2_ppm_ = 42.0;
         }
 
@@ -26,12 +22,12 @@ namespace esphome
             // Read CO2 value from I2C sensor
             //     TODO : Replace with actual I2C read operations
             //                Example placeholder : uint16_t co2_ppm = 0;
-            if (this->co2_sensor_ != nullptr)
+            if (this->co2_ppm_ != nullptr)
             {
-                this->co2_sensor_->publish_state(this->co2_ppm_);
+                this->publish_state(this->co2_ppm_);
                 ESP_LOGD(TAG, "Published CO2 value: %.2f ppm", this->co2_ppm_);
             } else {
-                ESP_LOGW(TAG, "CO2 sensor not configured, so not updated");
+                ESP_LOGW(TAG, "CO2 ppm is null, so not updated");
             }
 
             // For now, publish a dummy value if sensor is configured
