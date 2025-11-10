@@ -29,6 +29,9 @@ namespace esphome
             if (this->co2_sensor_ != nullptr)
             {
                 this->co2_sensor_->publish_state(this->co2_ppm_);
+                ESP_LOGD(TAG, "Published CO2 value: %.2f ppm", this->co2_ppm_);
+            } else {
+                ESP_LOGW(TAG, "CO2 sensor not configured, so not updated");
             }
 
             // For now, publish a dummy value if sensor is configured
