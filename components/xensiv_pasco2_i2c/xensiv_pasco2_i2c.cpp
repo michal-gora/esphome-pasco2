@@ -20,7 +20,8 @@ namespace esphome
 
             // Read CO2 value from I2C sensor
             //     TODO : Replace with actual I2C read operations
-            //                Example placeholder : uint16_t co2_ppm = 0;
+            //                Example placeholder : 
+            uint16_t co2_ppm = 0;
             if (this->co2_sensor_ != nullptr)
             {
                 this->co2_sensor_->publish_state(co2_ppm);
