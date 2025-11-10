@@ -44,6 +44,8 @@ namespace esphome
 
         void XensivPasCO2I2C::read_co2_ppm()
         {
+            // TODO DIENSTAG: properly implement reading CO2 ppm from the sensor, remove reading drdy before reading for checking if data is ready
+
             // Placeholder for reading CO2 ppm from the sensor
             // Read 2 bytes (MSB and LSB) from registers 0x5 and 0x6 in a single I2C transaction
             uint8_t data[2] = {0};
