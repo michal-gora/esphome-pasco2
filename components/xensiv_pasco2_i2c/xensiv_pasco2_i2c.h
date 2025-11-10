@@ -16,6 +16,7 @@ class XensivPasCO2I2C : public PollingComponent, public i2c::I2CDevice, public s
 
  protected:
   float co2_ppm_{0.0f};
+  uint16_t version_{2};
 };
 
 }  // namespace xensiv_pasco2_i2c
