@@ -37,11 +37,17 @@ namespace esphome
             // }
         }
 
+        float XensivPasCO2I2C::read_co2_ppm()
+        {
+            // Placeholder for reading CO2 ppm from the sensor
+
+        }
+
         void XensivPasCO2I2C::dump_config()
         {
             ESP_LOGCONFIG(TAG, "XensivPasCO2I2C Component:");
             ESP_LOGCONFIG(TAG, " Firmware Version: 0x%04X", this->version_);
-            // LOG_I2C_DEVICE(this);
+            LOG_I2C_DEVICE(this);
             LOG_UPDATE_INTERVAL(this);
             ESP_LOGCONFIG(TAG, "  Last CO2 Value: %.2f ppm", this->co2_ppm_);
         }
