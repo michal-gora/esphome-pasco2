@@ -24,10 +24,7 @@ CONFIG_SCHEMA = (
             state_class=STATE_CLASS_MEASUREMENT,
         ),
         cv.Optional(CONF_CO2): sensor.sensor_schema(
-            unit_of_measurement=UNIT_PARTS_PER_MILLION,
-            device_class=DEVICE_CLASS_CARBON_DIOXIDE,
             state_class=STATE_CLASS_MEASUREMENT,
-            accuracy_decimals=0,
         ),
     })
     .extend(cv.polling_component_schema("60s"))
