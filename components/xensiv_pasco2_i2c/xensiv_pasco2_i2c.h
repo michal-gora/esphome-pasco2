@@ -2,19 +2,16 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"
-// #include "esphome/components/i2c/i2c.h"
+#include "esphome/components/i2c/i2c.h"
 
 namespace esphome
 {
     namespace xensiv_pasco2_i2c
     {
 
-        class XensivPasCO2I2C : public PollingComponent//, public i2c::I2CDevice
+        class XensivPasCO2I2C : public sensor::Sensor, public i2c:I2CDevice, public PollingComponent
         {
         public:
-            // Constructor
-            XensivPasCO2I2C();
-
             void setup() override;
             void update() override;
             void dump_config() override;
@@ -24,8 +21,8 @@ namespace esphome
 
         protected:
             uint32_t test_value_;
-            sensor::Sensor *test_sensor_{nullptr};
             sensor::Sensor *co2_sensor_{nullptr};
+            uint16_t version_{0};
         };
     }
 }

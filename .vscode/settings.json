@@ -1,0 +1,17 @@
+{
+    // Include directories for code completion and navigation
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",                         // Includes the current project folder
+        "C:/Users/goramichalpa/Documents/Dev/esphome/esphome",         // Include ESPHome core C++ code
+        "C:/Users/goramichalpaw/Documents/Dev/esphome/esphome/components/**" // Include ESPHome component headers
+    ],
+
+    // Use IntelliSense for Windows
+    "C_Cpp.default.intelliSenseMode": "windows-msvc-x64",
+
+    // File association to treat .h (or any ESPHome specific files) as C++
+    "files.associations": {
+        "*.h": "cpp",
+        "esphome/**/*.h": "cpp"
+    }
+}
