@@ -10,11 +10,11 @@ from esphome.const import (
 
 CODEOWNERS = ["@goram"]
 CONF_TEST_VALUE = "test_value"
-CONF_CO2 = "co2"
+# CONF_CO2 = "co2"
 
 xensiv_pasco2_i2c_ns = cg.esphome_ns.namespace("xensiv_pasco2_i2c")
 XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
-    "XensivPasCO2I2C", cg.PollingComponent, i2c.I2CDevice
+    "XensivPasCO2I2C", cg.PollingComponent #, i2c.I2CDevice
 )
 
 CONFIG_SCHEMA = (
@@ -23,24 +23,24 @@ CONFIG_SCHEMA = (
         cv.Optional(CONF_TEST_VALUE): sensor.sensor_schema(
             state_class=STATE_CLASS_MEASUREMENT,
         ),
-        cv.Optional(CONF_CO2): sensor.sensor_schema(
-            state_class=STATE_CLASS_MEASUREMENT,
-        ),
+        # cv.Optional(CONF_CO2): sensor.sensor_schema(
+        #     state_class=STATE_CLASS_MEASUREMENT,
+        # ),
     })
     .extend(cv.polling_component_schema("60s"))
-    .extend(i2c.i2c_device_schema(0x28))
+    # .extend(i2c.i2c_device_schema(0x28))
 )
 
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
-    await i2c.register_i2c_device(var, config)
+    # await i2c.register_i2c_device(var, config)
     
     if test_value_config := config.get(CONF_TEST_VALUE):
         sens = await sensor.new_sensor(test_value_config)
         cg.add(var.set_test_sensor(sens))
     
-    if co2_config := config.get(CONF_CO2):
-        sens = await sensor.new_sensor(co2_config)
-        cg.add(var.set_co2_sensor(sens))
+    # if co2_config := config.get(CONF_CO2):
+    #     sens = await sensor.new_sensor(co2_config)
+    #     cg.add(var.set_co2_sensor(sens))
