@@ -19,7 +19,6 @@ namespace esphome
             void set_co2_sensor(sensor::Sensor *co2_sensor) { co2_sensor_ = co2_sensor; }
 
         protected:
-            uint32_t test_value_;
             sensor::Sensor *co2_sensor_{nullptr};
             uint16_t version_{0};
         };
