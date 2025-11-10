@@ -12,6 +12,7 @@ class XensivPasCO2I2C : public PollingComponent, public i2c::I2CDevice, public s
   void setup() override;
   void update() override;
   void dump_config() override;
+  void read_co2_ppm();
 
  protected:
   float co2_ppm_{0.0f};
