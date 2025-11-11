@@ -44,7 +44,7 @@ namespace esphome
             //     ESP_LOGD(TAG, "Data ready from interrupt");
             //     this->data_ready_ = false;
             // }
-            
+            set_continuous_operation_mode_with_interrupt_()
             this->read_co2_ppm();
 
         }
