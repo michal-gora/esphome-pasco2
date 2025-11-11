@@ -95,17 +95,22 @@ namespace esphome
 
         bool XensivPasCO2I2C::set_sensor_rate_(int16_t rate)
         {
-            // rate is cut off to lower 12bits only
-            int8_t rate_h = (rate >> 8) & 0x00FF;
-            int8_t rate_l = rate & 0xFFFF;
+            // Rate is stored in 12 bits across two registers (0x02 and 0x03)
+            // Register 0x02: bits [11:8] (upper 4 bits)
+            // Register 0x03: bits [7:0] (lower 8 bits)
+            uint8_t rate_h = (rate >> 8) & 0x0F;  // Upper 4 bits (mask to 12-bit max)
+            uint8_t rate_l = rate & 0xFF;          // Lower 8 bits
+            
+            ESP_LOGD(TAG, "Setting sensor rate to %d seconds (0x%02X%02X)", rate, rate_h, rate_l);
+            
             if (this->write_byte(0x02, rate_h) && this->write_byte(0x03, rate_l))
             {
-                ESP_LOGCONFIG(TAG, "Sensor rate set");
+                ESP_LOGCONFIG(TAG, "Sensor rate set to %d seconds", rate);
                 return true;
             }
             else
             {
-                ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+                ESP_LOGW(TAG, "Failed to set sensor rate");
                 return false;
             }
         }
