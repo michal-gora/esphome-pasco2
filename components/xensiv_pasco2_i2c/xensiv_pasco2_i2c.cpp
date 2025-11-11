@@ -18,6 +18,7 @@ namespace esphome
                 this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
                 this->interrupt_pin_->attach_interrupt(
                     [this]() { this->handle_interrupt_(); },
+                    nullptr,
                     gpio::INTERRUPT_RISING_EDGE  // High-active interrupt
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
