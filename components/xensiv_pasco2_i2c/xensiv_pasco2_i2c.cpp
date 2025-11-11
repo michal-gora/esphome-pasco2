@@ -72,7 +72,7 @@ namespace esphome
             const size_t debug_bytes_to_read = 17; // Set this variable to change how many bytes to read
             uint8_t debug_data[debug_bytes_to_read] = {0};
 
-            uint8_t co2_ppm_val[2] = 0;
+            uint8_t co2_ppm_val[2] = {0};
             uint8_t meas_sts = 0x00;
 
             // DRDY flag check
