@@ -50,41 +50,6 @@ namespace esphome
             {
                 ESP_LOGW(TAG, "Failed to read MEAS_CFG register (0x04)");
             }
-
-            uint8_t meas_sts_val = 0;
-            if (this->read_bytes(0x07, &meas_sts_val, 1))
-            {
-                ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X", meas_sts_val);
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Failed to read MEAS_STS register (0x07)");
-            }
-            // Clear MEAS_STS
-            uint8_t int_sts_clr_mask = 0b00000010;
-            this->write_byte(0x07, int_sts_clr_mask);
-            // Read again to verify clearing
-            meas_sts_val = 0;
-            if (this->read_bytes(0x07, &meas_sts_val, 1))
-            {
-                ESP_LOGD(TAG, "MEAS_STS (0x07) after clear: 0x%02X", meas_sts_val);
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Failed to read MEAS_STS register (0x07)");
-            }
-
-
-
-            uint8_t int_cfg_val = 0;
-            if (this->read_bytes(0x08, &int_cfg_val, 1))
-            {
-                ESP_LOGD(TAG, "INT_CFG (0x08): 0x%02X", int_cfg_val);
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Failed to read INT_CFG register (0x08)");
-            }
         }
 
         void XensivPasCO2I2C::gpio_intr(XensivPasCO2I2C *arg)
