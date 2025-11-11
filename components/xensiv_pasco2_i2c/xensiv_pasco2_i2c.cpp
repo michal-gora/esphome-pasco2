@@ -10,13 +10,7 @@ namespace esphome
         void XensivPasCO2I2C::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
-            // Write 0x25 to MEAS_CFG register (0x04) to enable continuous measurement mode
-            uint8_t meas_cfg_value = 0x26;
-            if (this->write_byte(0x04, meas_cfg_value)) {
-            ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26)");
-            } else {
-            ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
-            }
+            set_continuous_operation_mode_();
             this->co2_ppm_ = 42.0;
         }
 
@@ -42,32 +36,58 @@ namespace esphome
             // }
         }
 
+        bool XensivPasCO2I2C::set_continuous_operation_mode_()
+        {
+            // Write 0x26 to MEAS_CFG register (0x04) to enable continuous measurement mode
+            uint8_t meas_cfg_value = 0x26;
+            if (this->write_byte(0x04, meas_cfg_value))
+            {
+                ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26)");
+                return true;
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+                return false;
+            }
+        }
+
+        bool XensivPasCO2I2C::single_shot_measure_co2_ppm_(){
+            // starts single-shot measurement
+            uint8_t meas_cfg_value = 0x25;
+            if (this->write_byte(0x04, meas_cfg_value))
+            {
+                ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26)");
+                return true;
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+                return false;
+            }
+        }
+
         void XensivPasCO2I2C::read_co2_ppm()
         {
-            // TODO DIENSTAG: properly implement reading CO2 ppm from the sensor, remove reading drdy before reading for checking if data is ready
-
-            // Placeholder for reading CO2 ppm from the sensor
-            // Read 2 bytes (MSB and LSB) from registers 0x5 and 0x6 in a single I2C transaction
-            uint8_t data[2] = {0};
-            // Try reading 8 bytes starting from register 0x0 for debugging
+            // Try reading x bytes starting from register 0x0 for debugging
             const size_t debug_bytes_to_read = 17; // Set this variable to change how many bytes to read
             uint8_t debug_data[debug_bytes_to_read] = {0};
-            if (this->read_bytes(0x0, debug_data, debug_bytes_to_read)) {
-                ESP_LOGD(TAG, "I2C raw data:");
-                for (size_t i = 0; i < debug_bytes_to_read; ++i) {
-                    ESP_LOGD(TAG, "  Byte %zu: 0x%02X", i, debug_data[i]);
-                }
-                // Check DRDY flag in MEAS_STS (address 0x07, bit 4)
+            if (this->read_bytes(0x0, debug_data, debug_bytes_to_read))
+            {
+                // Get DRDY flag in MEAS_STS (address 0x07, bit 4)
                 uint8_t meas_sts = debug_data[7];
                 bool drdy = (meas_sts & (1 << 4)) != 0;
                 ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X, DRDY: %s", meas_sts, drdy ? "SET" : "NOT SET");
 
-                // Log SENS_STS (address 0x08)
-                uint8_t sens_sts = debug_data[8];
-                ESP_LOGD(TAG, "SENS_STS (0x08): 0x%02X", sens_sts);
-                // SENS_STS is a status register that provides sensor status flags, such as error conditions, calibration status, and other sensor-specific states. Refer to the sensor's datasheet for detailed bit definitions.
+                // Raw data for debugging
+                ESP_LOGD(TAG, "I2C raw data:");
+                for (size_t i = 0; i < debug_bytes_to_read; ++i)
+                {
+                    ESP_LOGD(TAG, "  Byte %zu: 0x%02X", i, debug_data[i]);
+                }
 
-                if (drdy) {
+                if (drdy)
+                {
                     // Read CO2PPM_H (0x05) and CO2PPM_L (0x06)
                     uint8_t co2ppm_h = debug_data[5];
                     uint8_t co2ppm_l = debug_data[6];
@@ -76,13 +96,15 @@ namespace esphome
 
                     int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
                     this->co2_ppm_ = static_cast<float>(co2_raw);
-                } else {
-                    ESP_LOGW(TAG, "DRDY not set, CO2 value not ready");
-                    this->co2_ppm_ = NAN;
                 }
-            } else {
+                else
+                {
+                    ESP_LOGW(TAG, "DRDY not set, CO2 value not ready");
+                }
+            }
+            else
+            {
                 ESP_LOGW(TAG, "Failed to read I2C debug data from sensor");
-                this->co2_ppm_ = NAN;
             }
         }
 
