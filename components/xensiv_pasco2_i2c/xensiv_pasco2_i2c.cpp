@@ -73,7 +73,7 @@ namespace esphome
             uint8_t debug_data[debug_bytes_to_read] = {0};
 
             uint8_t co2_ppm_val[2] = {0};
-            uint8_t* meas_sts = nullptr;
+            uint8_t* meas_sts;
 
             // DRDY flag check
             if (this->read_bytes(0x07, meas_sts, 1))
