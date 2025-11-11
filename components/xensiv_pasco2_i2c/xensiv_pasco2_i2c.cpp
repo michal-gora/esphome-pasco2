@@ -73,14 +73,14 @@ namespace esphome
             uint8_t debug_data[debug_bytes_to_read] = {0};
 
             uint8_t co2_ppm_val[2] = {0};
-            uint8_t meas_sts = 0x00;
+            uint8_t* meas_sts = nullptr;
 
             // DRDY flag check
             if (this->read_bytes(0x07, meas_sts, 1))
             {
                 // Get DRDY flag in MEAS_STS (address 0x07, bit 4)
-                bool drdy = (meas_sts & (1 << 4)) != 0;
-                ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X, DRDY: %s", meas_sts, drdy ? "SET" : "NOT SET");
+                bool drdy = (*meas_sts & (1 << 4)) != 0;
+                ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X, DRDY: %s", *meas_sts, drdy ? "SET" : "NOT SET");
 
                 if (drdy)
                 {
