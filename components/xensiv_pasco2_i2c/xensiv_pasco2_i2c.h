@@ -3,6 +3,7 @@
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/i2c/i2c.h"
+#include "esphome/core/gpio.h"
 
 namespace esphome {
 namespace xensiv_pasco2_i2c {
@@ -14,12 +15,19 @@ class XensivPasCO2I2C : public PollingComponent, public i2c::I2CDevice, public s
   void dump_config() override;
   void read_co2_ppm();
   
-  protected:
+  void set_interrupt_pin(InternalGPIOPin *pin) { interrupt_pin_ = pin; }
+  
+ protected:
+  void handle_interrupt_();
+  
   float co2_ppm_{0.0f};
   uint16_t version_{2};
   bool set_continuous_operation_mode_();
   bool single_shot_measure_co2_ppm_();
   bool set_sensor_rate_(int16_t);
+  
+  InternalGPIOPin *interrupt_pin_{nullptr};
+  volatile bool data_ready_{false};
 };
 
 }  // namespace xensiv_pasco2_i2c

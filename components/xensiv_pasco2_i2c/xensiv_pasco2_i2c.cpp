@@ -10,47 +10,68 @@ namespace esphome
         void XensivPasCO2I2C::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
+            
+            // Set up interrupt pin if configured
+            if (this->interrupt_pin_ != nullptr) {
+                this->interrupt_pin_->setup();
+                // Input only - sensor has push-pull output (high-active)
+                this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
+                this->interrupt_pin_->attach_interrupt(
+                    [this]() { this->handle_interrupt_(); },
+                    gpio::INTERRUPT_RISING_EDGE  // High-active interrupt
+                );
+                ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
+            }
+            
             set_continuous_operation_mode_();
             set_sensor_rate_(5);
+        }
+        
+        void XensivPasCO2I2C::handle_interrupt_()
+        {
+            // ISR - keep this minimal
+            this->data_ready_ = true;
+            ESP_LOGW(TAG, "Interrupt triggered - data ready");
         }
 
         void XensivPasCO2I2C::update()
         {
             ESP_LOGD(TAG, "Updating XensivPasCO2I2C component");
-
-            // Read CO2 value from I2C sensor
-            //     TODO : Replace with actual I2C read operations
-            //                Example placeholder : uint16_t co2_ppm = 0;
+            
+            // // Check if interrupt triggered
+            // if (this->data_ready_) {
+            //     ESP_LOGD(TAG, "Data ready from interrupt");
+            //     this->data_ready_ = false;
+            // }
+            
             this->read_co2_ppm();
 
-            // For now, publish a dummy value if sensor is configured
-            // if (this->co2_sensor_ != nullptr) {
-            //     // Placeholder: publish a test value (400-500 ppm range)
-            //     float dummy_co2 = 400.0f + (test_value_ % 100);
-            //     this->co2_sensor_->publish_state(dummy_co2);
-            //     ESP_LOGD(TAG, "Published dummy CO2 value: %.2f ppm", dummy_co2);
-            // } else {
-            //     ESP_LOGW(TAG, "CO2 sensor not configured");
-            // }
         }
 
         bool XensivPasCO2I2C::set_continuous_operation_mode_()
         {
             // Write 0x26 to MEAS_CFG register (0x04) to enable continuous measurement mode
             uint8_t meas_cfg_value = 0x26;
-            if (this->write_byte(0x04, meas_cfg_value))
+            bool success = this->write_byte(0x04, meas_cfg_value);
+
+            // Set interrupt by writing 0x15 to register 0x08
+            uint8_t int_cfg_value = 0x15;
+            bool int_success = this->write_byte(0x08, int_cfg_value);
+
+            if (success && int_success)
             {
-                ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26)");
-                return true;
+            ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26) and interrupt configured (INT_CFG=0x15)");
+            return true;
             }
             else
             {
-                ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
-                return false;
+            ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode or configure interrupt");
+            return false;
             }
         }
 
         bool XensivPasCO2I2C::set_sensor_rate_(int16_t rate){
+            // rate is cut off to lower 12bits only
             int8_t rate_h = (rate >> 8) & 0x00FF;
             int8_t rate_l = rate & 0xFFFF;
             if (this->write_byte(0x02, rate_h) && this->write_byte(0x03, rate_l))
@@ -98,19 +119,16 @@ namespace esphome
                 bool drdy = (*meas_sts & (1 << 4)) != 0;
                 ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X, DRDY: %s", *meas_sts, drdy ? "SET" : "NOT SET");
 
-                if (drdy || true)
+                if (drdy || true) // TODO fix
                 {
                     if (this->read_bytes(0x05, co2_ppm_val, 2))
                     {
                         // Read CO2PPM_H (0x05) and CO2PPM_L (0x06)
                         uint8_t co2ppm_h = co2_ppm_val[0];
                         uint8_t co2ppm_l = co2_ppm_val[1];
-                        ESP_LOGD(TAG, "CO2PPM_H (0x05): 0x%02X", co2ppm_h);
-                        ESP_LOGD(TAG, "CO2PPM_L (0x06): 0x%02X", co2ppm_l);
                         int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
                         this->co2_ppm_ = static_cast<float>(co2_raw);
                         this->publish_state(this->co2_ppm_);
-                        ESP_LOGD(TAG, "DRDY was set!, CO2 value ready: %.2f ppm", this->co2_ppm_);
                     }
                 }
                 else
