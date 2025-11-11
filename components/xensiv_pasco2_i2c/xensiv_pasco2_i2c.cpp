@@ -62,7 +62,7 @@ namespace esphome
             }
             // Clear MEAS_STS
             uint8_t int_sts_clr_mask = 0x0;
-            arg->write_byte(0x07, int_sts_clr_mask);
+            this->write_byte(0x07, int_sts_clr_mask);
             // Read again to verify clearing
             meas_sts_val = 0;
             if (this->read_bytes(0x07, &meas_sts_val, 1))
