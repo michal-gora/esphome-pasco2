@@ -55,7 +55,7 @@ namespace esphome
         void XensivPasCO2I2C::gpio_intr(XensivPasCO2I2C *arg)
         {
             // ISR - keep this minimal, no logging in ISR!
-            arg->data_ready_ = true;
+            read_co2_ppm();
             ESP_LOGW(TAG, "Interrupt triggered - data ready");
             // Clear MEAS_STS
             uint8_t int_sts_clr_mask = 0x0;
