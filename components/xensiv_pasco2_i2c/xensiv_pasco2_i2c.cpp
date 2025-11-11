@@ -11,7 +11,16 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
             
-            // TODO prepare sensor, reset sticky bits
+            // Perform full sensor reset (reset sticky bits, set to idle state)
+            // According to the datasheet:
+            // - Write 0xA3 to register 0x10 (SOFT_RESET)
+
+            // Soft reset
+            if (this->write_byte(0x10, 0xA3)) {
+                ESP_LOGCONFIG(TAG, "Sensor soft reset (SOFT_RESET=0xA3 to 0x10)");
+            } else {
+                ESP_LOGW(TAG, "Failed to perform sensor soft reset");
+            }
 
             set_sensor_rate_(10);
             set_continuous_operation_mode_with_interrupt_();
