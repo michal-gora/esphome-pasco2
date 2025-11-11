@@ -24,7 +24,7 @@ namespace esphome
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
             }
             
-            set_continuous_operation_mode_();
+            set_continuous_operation_mode_with_interrupt_();
             set_sensor_rate_(5);
         }
         
@@ -32,6 +32,7 @@ namespace esphome
         {
             // ISR - keep this minimal, no logging in ISR!
             arg->data_ready_ = true;
+            ESP_LOGW(TAG, "Interrupt triggered - data ready");
         }
 
         void XensivPasCO2I2C::update()
@@ -48,7 +49,7 @@ namespace esphome
 
         }
 
-        bool XensivPasCO2I2C::set_continuous_operation_mode_()
+        bool XensivPasCO2I2C::set_continuous_operation_mode_with_interrupt_()
         {
             // Write 0x26 to MEAS_CFG register (0x04) to enable continuous measurement mode
             uint8_t meas_cfg_value = 0x26;
