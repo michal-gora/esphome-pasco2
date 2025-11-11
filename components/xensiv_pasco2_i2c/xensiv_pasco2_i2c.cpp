@@ -22,8 +22,6 @@ namespace esphome
             //     TODO : Replace with actual I2C read operations
             //                Example placeholder : uint16_t co2_ppm = 0;
             this->read_co2_ppm();
-            this->publish_state(this->co2_ppm_);
-            ESP_LOGD(TAG, "Published CO2 value: %.2f ppm", this->co2_ppm_);
 
             // For now, publish a dummy value if sensor is configured
             // if (this->co2_sensor_ != nullptr) {
@@ -52,7 +50,8 @@ namespace esphome
             }
         }
 
-        bool XensivPasCO2I2C::single_shot_measure_co2_ppm_(){
+        bool XensivPasCO2I2C::single_shot_measure_co2_ppm_()
+        {
             // starts single-shot measurement
             uint8_t meas_cfg_value = 0x25;
             if (this->write_byte(0x04, meas_cfg_value))
@@ -72,40 +71,61 @@ namespace esphome
             // Try reading x bytes starting from register 0x0 for debugging
             const size_t debug_bytes_to_read = 17; // Set this variable to change how many bytes to read
             uint8_t debug_data[debug_bytes_to_read] = {0};
-            if (this->read_bytes(0x0, debug_data, debug_bytes_to_read))
+
+            uint8_t co2_ppm_val[2] = 0;
+            uint8_t meas_sts = 0x00;
+
+            // DRDY flag check
+            if (this->read_bytes(0x07, meas_sts, 1))
             {
                 // Get DRDY flag in MEAS_STS (address 0x07, bit 4)
-                uint8_t meas_sts = debug_data[7];
                 bool drdy = (meas_sts & (1 << 4)) != 0;
                 ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X, DRDY: %s", meas_sts, drdy ? "SET" : "NOT SET");
 
-                // Raw data for debugging
-                ESP_LOGD(TAG, "I2C raw data:");
-                for (size_t i = 0; i < debug_bytes_to_read; ++i)
-                {
-                    ESP_LOGD(TAG, "  Byte %zu: 0x%02X", i, debug_data[i]);
-                }
-
-                // Read CO2PPM_H (0x05) and CO2PPM_L (0x06)
-                uint8_t co2ppm_h = debug_data[5];
-                uint8_t co2ppm_l = debug_data[6];
-                ESP_LOGD(TAG, "CO2PPM_H (0x05): 0x%02X", co2ppm_h);
-                ESP_LOGD(TAG, "CO2PPM_L (0x06): 0x%02X", co2ppm_l);
                 if (drdy)
                 {
-                    int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
-                    this->co2_ppm_ = static_cast<float>(co2_raw);
-                    ESP_LOGD(TAG, "DRDY was set!, CO2 value ready: %.2f ppm", this->co2_ppm_);
+                    if (this->read_bytes(0x05, co2_ppm_val, 2))
+                    {
+                        // Read CO2PPM_H (0x05) and CO2PPM_L (0x06)
+                        uint8_t co2ppm_h = co2_ppm_val[0];
+                        uint8_t co2ppm_l = co2_ppm_val[1];
+                        ESP_LOGD(TAG, "CO2PPM_H (0x05): 0x%02X", co2ppm_h);
+                        ESP_LOGD(TAG, "CO2PPM_L (0x06): 0x%02X", co2ppm_l);
+                        if (drdy)
+                        {
+                            int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
+                            this->co2_ppm_ = static_cast<float>(co2_raw);
+                            this->publish_state(this->co2_ppm_);
+                            ESP_LOGD(TAG, "DRDY was set!, CO2 value ready: %.2f ppm", this->co2_ppm_);
+                        }
+                        else
+                        {
+                            ESP_LOGW(TAG, "DRDY not set, CO2 value not ready");
+                        }
+                    }
+                }else{
+                    ESP_LOGD(TAG, "DRDY not set, CO2 value not ready");
                 }
-                else
-                {
-                    ESP_LOGW(TAG, "DRDY not set, CO2 value not ready");
-                }
-            }
-            else
+            }else
             {
-                ESP_LOGW(TAG, "Failed to read I2C debug data from sensor");
+                ESP_LOGW(TAG, "Failed to read MEAS_STS register for DRDY check");
             }
+
+
+            // Raw data for debugging
+            // if (this->read_bytes(0x0, debug_data, debug_bytes_to_read))
+            // {
+
+            //     ESP_LOGD(TAG, "I2C raw data:");
+            //     for (size_t i = 0; i < debug_bytes_to_read; ++i)
+            //     {
+            //         ESP_LOGD(TAG, "  Byte %zu: 0x%02X", i, debug_data[i]);
+            //     }
+            // }
+            // else
+            // {
+            //     ESP_LOGW(TAG, "Failed to read I2C debug data from sensor");
+            // }
         }
 
         void XensivPasCO2I2C::dump_config()
