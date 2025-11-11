@@ -38,9 +38,28 @@ namespace esphome
             //     ESP_LOGD(TAG, "Data ready from interrupt");
             //     this->data_ready_ = false;
             // }
-            
+
             // set_continuous_operation_mode_with_interrupt_();
             // this->read_co2_ppm();
+            uint8_t meas_cfg_val = 0;
+            if (this->read_bytes(0x04, &meas_cfg_val, 1))
+            {
+                ESP_LOGD(TAG, "MEAS_CFG (0x04): 0x%02X", meas_cfg_val);
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Failed to read MEAS_CFG register (0x04)");
+            }
+
+            uint8_t meas_sts_val = 0;
+            if (this->read_bytes(0x07, &meas_sts_val, 1))
+            {
+                ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X", meas_sts_val);
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Failed to read MEAS_STS register (0x07)");
+            }
             uint8_t int_cfg_val = 0;
             if (this->read_bytes(0x08, &int_cfg_val, 1))
             {
