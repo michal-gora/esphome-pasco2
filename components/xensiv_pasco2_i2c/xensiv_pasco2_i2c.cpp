@@ -86,16 +86,16 @@ namespace esphome
                     ESP_LOGD(TAG, "  Byte %zu: 0x%02X", i, debug_data[i]);
                 }
 
+                // Read CO2PPM_H (0x05) and CO2PPM_L (0x06)
+                uint8_t co2ppm_h = debug_data[5];
+                uint8_t co2ppm_l = debug_data[6];
+                ESP_LOGD(TAG, "CO2PPM_H (0x05): 0x%02X", co2ppm_h);
+                ESP_LOGD(TAG, "CO2PPM_L (0x06): 0x%02X", co2ppm_l);
                 if (drdy)
                 {
-                    // Read CO2PPM_H (0x05) and CO2PPM_L (0x06)
-                    uint8_t co2ppm_h = debug_data[5];
-                    uint8_t co2ppm_l = debug_data[6];
-                    ESP_LOGD(TAG, "CO2PPM_H (0x05): 0x%02X", co2ppm_h);
-                    ESP_LOGD(TAG, "CO2PPM_L (0x06): 0x%02X", co2ppm_l);
-
                     int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
                     this->co2_ppm_ = static_cast<float>(co2_raw);
+                    ESP_LOGD(TAG, "DRDY was set!, CO2 value ready: %.2f ppm", this->co2_ppm_);
                 }
                 else
                 {
