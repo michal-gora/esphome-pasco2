@@ -17,7 +17,7 @@ class XensivPasCO2I2C : public PollingComponent, public i2c::I2CDevice, public s
   protected:
   float co2_ppm_{0.0f};
   uint16_t version_{2};
-  bool set_contiuous_operation_mode_();
+  bool set_continuous_operation_mode_();
   bool single_shot_measure_co2_ppm_();
 };
 
