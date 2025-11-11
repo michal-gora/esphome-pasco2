@@ -58,7 +58,7 @@ namespace esphome
             arg->read_co2_ppm();
             ESP_LOGW(TAG, "Interrupt triggered - data ready");
             // Clear MEAS_STS
-            uint8_t int_sts_clr_mask = 0x0;
+            uint8_t int_sts_clr_mask = 0x2;
             arg->write_byte(0x07, int_sts_clr_mask);
         }
 
