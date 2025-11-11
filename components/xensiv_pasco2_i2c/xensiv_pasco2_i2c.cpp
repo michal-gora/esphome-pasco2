@@ -10,7 +10,10 @@ namespace esphome
         void XensivPasCO2I2C::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
-
+            
+            set_sensor_rate_(10);
+            set_continuous_operation_mode_with_interrupt_();
+            
             // Set up interrupt pin if configured
             if (this->interrupt_pin_ != nullptr)
             {
@@ -25,8 +28,6 @@ namespace esphome
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
             }
 
-            set_sensor_rate_(10);
-            set_continuous_operation_mode_with_interrupt_();
         }
 
         void XensivPasCO2I2C::update()
