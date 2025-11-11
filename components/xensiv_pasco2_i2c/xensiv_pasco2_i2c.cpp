@@ -76,6 +76,9 @@ namespace esphome
             // ISR - keep this minimal, no logging in ISR!
             arg->data_ready_ = true;
             ESP_LOGW(TAG, "Interrupt triggered - data ready");
+            // Clear MEAS_STS
+            uint8_t int_sts_clr_mask = 0x0;
+            this->write_byte(0x07, int_sts_clr_mask);
         }
 
         bool XensivPasCO2I2C::set_continuous_operation_mode_with_interrupt_()
