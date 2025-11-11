@@ -19,7 +19,7 @@ namespace esphome
                 this->interrupt_pin_->attach_interrupt(
                     XensivPasCO2I2C::gpio_intr,
                     this,
-                    gpio::INTERRUPT_RISING_EDGE  // High-active interrupt
+                    gpio::INTERRUPT_ANY_EDGE  // High-active interrupt
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
             }
