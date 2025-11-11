@@ -73,7 +73,7 @@ namespace esphome
             uint8_t debug_data[debug_bytes_to_read] = {0};
 
             uint8_t co2_ppm_val[2] = {0};
-            uint8_t* meas_sts;
+            uint8_t *meas_sts;
 
             // DRDY flag check
             if (this->read_bytes(0x07, meas_sts, 1))
@@ -91,26 +91,21 @@ namespace esphome
                         uint8_t co2ppm_l = co2_ppm_val[1];
                         ESP_LOGD(TAG, "CO2PPM_H (0x05): 0x%02X", co2ppm_h);
                         ESP_LOGD(TAG, "CO2PPM_L (0x06): 0x%02X", co2ppm_l);
-                        if (drdy)
-                        {
-                            int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
-                            this->co2_ppm_ = static_cast<float>(co2_raw);
-                            this->publish_state(this->co2_ppm_);
-                            ESP_LOGD(TAG, "DRDY was set!, CO2 value ready: %.2f ppm", this->co2_ppm_);
-                        }
-                        else
-                        {
-                            ESP_LOGW(TAG, "DRDY not set, CO2 value not ready");
-                        }
+                        int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
+                        this->co2_ppm_ = static_cast<float>(co2_raw);
+                        this->publish_state(this->co2_ppm_);
+                        ESP_LOGD(TAG, "DRDY was set!, CO2 value ready: %.2f ppm", this->co2_ppm_);
                     }
-                }else{
+                }
+                else
+                {
                     ESP_LOGD(TAG, "DRDY not set, CO2 value not ready");
                 }
-            }else
+            }
+            else
             {
                 ESP_LOGW(TAG, "Failed to read MEAS_STS register for DRDY check");
             }
-
 
             // Raw data for debugging
             // if (this->read_bytes(0x0, debug_data, debug_bytes_to_read))
