@@ -11,7 +11,9 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
             
-            set_sensor_rate_(90);
+            // TODO prepare sensor, reset sticky bits
+
+            set_sensor_rate_(10);
             set_continuous_operation_mode_with_interrupt_();
 
             // Set up interrupt pin if configured
