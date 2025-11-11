@@ -17,8 +17,8 @@ namespace esphome
                 // Input only - sensor has push-pull output (high-active)
                 this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
                 this->interrupt_pin_->attach_interrupt(
-                    [this]() { this->handle_interrupt_(); },
-                    nullptr,
+                    XensivPasCO2I2C::gpio_intr,
+                    this,
                     gpio::INTERRUPT_RISING_EDGE  // High-active interrupt
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
@@ -28,11 +28,10 @@ namespace esphome
             set_sensor_rate_(5);
         }
         
-        void XensivPasCO2I2C::handle_interrupt_()
+        void XensivPasCO2I2C::gpio_intr(XensivPasCO2I2C *arg)
         {
-            // ISR - keep this minimal
-            this->data_ready_ = true;
-            ESP_LOGW(TAG, "Interrupt triggered - data ready");
+            // ISR - keep this minimal, no logging in ISR!
+            arg->data_ready_ = true;
         }
 
         void XensivPasCO2I2C::update()
