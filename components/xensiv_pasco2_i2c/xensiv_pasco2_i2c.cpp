@@ -11,7 +11,7 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
             set_continuous_operation_mode_();
-            this->co2_ppm_ = 42.0;
+            set_sensor_rate_(5);
         }
 
         void XensivPasCO2I2C::update()
@@ -49,6 +49,22 @@ namespace esphome
                 return false;
             }
         }
+
+        bool XensivPasCO2I2C::set_sensor_rate_(int16_t rate){
+            int8_t rate_h = (rate >> 8) & 0x00FF;
+            int8_t rate_l = rate & 0xFFFF;
+            if (this->write_byte(0x02, rate_h) && this->write_byte(0x03, rate_l))
+            {
+                ESP_LOGCONFIG(TAG, "Sensor rate set");
+                return true;
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+                return false;
+            }
+        }
+
 
         bool XensivPasCO2I2C::single_shot_measure_co2_ppm_()
         {

@@ -19,6 +19,7 @@ class XensivPasCO2I2C : public PollingComponent, public i2c::I2CDevice, public s
   uint16_t version_{2};
   bool set_continuous_operation_mode_();
   bool single_shot_measure_co2_ppm_();
+  bool set_sensor_rate_(int16_t);
 };
 
 }  // namespace xensiv_pasco2_i2c
