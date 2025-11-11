@@ -61,7 +61,7 @@ namespace esphome
                 ESP_LOGW(TAG, "Failed to read MEAS_STS register (0x07)");
             }
             // Clear MEAS_STS
-            uint8_t int_sts_clr_mask = 0x0;
+            uint8_t int_sts_clr_mask = 0b00000010;
             this->write_byte(0x07, int_sts_clr_mask);
             // Read again to verify clearing
             meas_sts_val = 0;
