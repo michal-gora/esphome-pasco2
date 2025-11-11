@@ -21,6 +21,7 @@ namespace esphome
             } else {
                 ESP_LOGW(TAG, "Failed to perform sensor soft reset");
             }
+            delay(3000); // Wait 3 seconds for reset to complete
 
             set_sensor_rate_(10);
             set_continuous_operation_mode_with_interrupt_();
