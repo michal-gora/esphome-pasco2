@@ -10,43 +10,53 @@ namespace esphome
         void XensivPasCO2I2C::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
-            
+
             // Set up interrupt pin if configured
-            if (this->interrupt_pin_ != nullptr) {
+            if (this->interrupt_pin_ != nullptr)
+            {
                 this->interrupt_pin_->setup();
                 // Input only - sensor has push-pull output (high-active)
                 this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
                 this->interrupt_pin_->attach_interrupt(
                     XensivPasCO2I2C::gpio_intr,
                     this,
-                    gpio::INTERRUPT_ANY_EDGE  // High-active interrupt
+                    gpio::INTERRUPT_ANY_EDGE // High-active interrupt
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
             }
-            
+
             set_continuous_operation_mode_with_interrupt_();
             set_sensor_rate_(5);
-        }
-        
-        void XensivPasCO2I2C::gpio_intr(XensivPasCO2I2C *arg)
-        {
-            // ISR - keep this minimal, no logging in ISR!
-            arg->data_ready_ = true;
-            ESP_LOGW(TAG, "Interrupt triggered - data ready");
         }
 
         void XensivPasCO2I2C::update()
         {
             ESP_LOGD(TAG, "Updating XensivPasCO2I2C component");
-            
+
             // // Check if interrupt triggered
             // if (this->data_ready_) {
             //     ESP_LOGD(TAG, "Data ready from interrupt");
             //     this->data_ready_ = false;
             // }
-            set_continuous_operation_mode_with_interrupt_();
+            
+            // set_continuous_operation_mode_with_interrupt_();
             // this->read_co2_ppm();
+            uint8_t int_cfg_val = 0;
+            if (this->read_bytes(0x08, &int_cfg_val, 1))
+            {
+                ESP_LOGD(TAG, "INT_CFG (0x08): 0x%02X", int_cfg_val);
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Failed to read INT_CFG register (0x08)");
+            }
+        }
 
+        void XensivPasCO2I2C::gpio_intr(XensivPasCO2I2C *arg)
+        {
+            // ISR - keep this minimal, no logging in ISR!
+            arg->data_ready_ = true;
+            ESP_LOGW(TAG, "Interrupt triggered - data ready");
         }
 
         bool XensivPasCO2I2C::set_continuous_operation_mode_with_interrupt_()
@@ -61,17 +71,18 @@ namespace esphome
 
             if (success && int_success)
             {
-            ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26) and interrupt configured (INT_CFG=0x15)");
-            return true;
+                ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26) and interrupt configured (INT_CFG=0x15)");
+                return true;
             }
             else
             {
-            ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode or configure interrupt");
-            return false;
+                ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode or configure interrupt");
+                return false;
             }
         }
 
-        bool XensivPasCO2I2C::set_sensor_rate_(int16_t rate){
+        bool XensivPasCO2I2C::set_sensor_rate_(int16_t rate)
+        {
             // rate is cut off to lower 12bits only
             int8_t rate_h = (rate >> 8) & 0x00FF;
             int8_t rate_l = rate & 0xFFFF;
@@ -86,7 +97,6 @@ namespace esphome
                 return false;
             }
         }
-
 
         bool XensivPasCO2I2C::single_shot_measure_co2_ppm_()
         {
