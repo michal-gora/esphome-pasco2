@@ -82,7 +82,7 @@ namespace esphome
                 bool drdy = (*meas_sts & (1 << 4)) != 0;
                 ESP_LOGD(TAG, "MEAS_STS (0x07): 0x%02X, DRDY: %s", *meas_sts, drdy ? "SET" : "NOT SET");
 
-                if (drdy)
+                if (drdy || true)
                 {
                     if (this->read_bytes(0x05, co2_ppm_val, 2))
                     {
