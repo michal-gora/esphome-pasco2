@@ -25,7 +25,7 @@ namespace esphome
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
             }
 
-            set_sensor_rate_(5);
+            set_sensor_rate_(10);
             set_continuous_operation_mode_with_interrupt_();
         }
 
