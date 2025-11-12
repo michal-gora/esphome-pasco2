@@ -19,18 +19,18 @@ namespace esphome
       void read_co2_ppm();
 
       void set_interrupt_pin(InternalGPIOPin *pin) { interrupt_pin_ = pin; }
-      void set_sensor_rate_value(int16_t rate) { sensor_rate = rate; }
-
-    protected:
+      
+      protected:
       static void gpio_intr_(XensivPasCO2I2C *arg);
       static void setup_sensor_(XensivPasCO2I2C *arg);
-
+      
       float co2_ppm_{0.0f};
       uint16_t version_{2};
       int16_t sensor_rate_{10}; // Default rate in seconds
       bool set_continuous_operation_mode_with_interrupt_();
       bool single_shot_measure_co2_ppm_();
-      bool set_sensor_rate_(int16_t);
+      void set_sensor_rate_value_(int16_t rate) { sensor_rate_ = rate; }
+      bool select_sensor_rate_(int16_t);
 
       InternalGPIOPin *interrupt_pin_{nullptr};
       volatile bool data_ready_{false};
