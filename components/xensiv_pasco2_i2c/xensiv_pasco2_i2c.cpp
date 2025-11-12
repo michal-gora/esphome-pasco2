@@ -34,7 +34,7 @@ namespace esphome
             // Additional sensor setup if needed
             delay(3000); // Wait 3 seconds for reset to complete
 
-            arg->set_sensor_rate_(10);
+            arg->set_sensor_rate_(15);
             arg->set_continuous_operation_mode_with_interrupt_();
 
             // Set up interrupt pin if configured
