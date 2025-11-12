@@ -11,39 +11,45 @@ namespace esphome
         void XensivPasCO2I2C::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
-            
+
             // Perform full sensor reset (reset sticky bits, set to idle state)
             // According to the datasheet:
             // - Write 0xA3 to register 0x10 (SOFT_RESET)
 
             // Soft reset
-            if (this->write_byte(0x10, 0xA3)) {
+            if (this->write_byte(0x10, 0xA3))
+            {
                 ESP_LOGCONFIG(TAG, "Sensor soft reset (SOFT_RESET=0xA3 to 0x10)");
-            } else {
+            }
+            else
+            {
                 ESP_LOGW(TAG, "Failed to perform sensor soft reset");
             }
             // Run sensor initialization in a separate thread to avoid blocking the main thread
-            std::thread([this]() {
-                delay(3000); // Wait 3 seconds for reset to complete
+            std::thread(XensivPasCO2I2C::setup_sensor_, this).detach();
+        }
 
-                set_sensor_rate_(10);
-                set_continuous_operation_mode_with_interrupt_();
+        void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
+        {
+            // Additional sensor setup if needed
+            delay(3000); // Wait 3 seconds for reset to complete
 
-                // Set up interrupt pin if configured
-                if (this->interrupt_pin_ != nullptr)
-                {
-                    this->interrupt_pin_->setup();
-                    // Input only - sensor has push-pull output (high-active)
-                    this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
-                    this->interrupt_pin_->attach_interrupt(
-                        XensivPasCO2I2C::gpio_intr,
-                        this,
-                        gpio::INTERRUPT_RISING_EDGE // High-active interrupt
-                    );
-                    ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
-                }
-            }).detach();
+            arg->set_sensor_rate_(10);
+            arg->set_continuous_operation_mode_with_interrupt_();
 
+            // Set up interrupt pin if configured
+            if (arg->interrupt_pin_ != nullptr)
+            {
+                arg->interrupt_pin_->setup();
+                // Input only - sensor has push-pull output (high-active)
+                arg->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
+                arg->interrupt_pin_->attach_interrupt(
+                    XensivPasCO2I2C::gpio_intr_,
+                    arg,
+                    gpio::INTERRUPT_RISING_EDGE // High-active interrupt
+                );
+                ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
+            }
         }
 
         void XensivPasCO2I2C::update()
@@ -60,10 +66,13 @@ namespace esphome
             // this->read_co2_ppm();
 
             uint8_t rate_h = 0, rate_l = 0;
-            if (this->read_bytes(0x02, &rate_h, 1) && this->read_bytes(0x03, &rate_l, 1)) {
+            if (this->read_bytes(0x02, &rate_h, 1) && this->read_bytes(0x03, &rate_l, 1))
+            {
                 int16_t rate = (static_cast<int16_t>(rate_h) << 8) | rate_l;
                 ESP_LOGD(TAG, "Sensor rate (0x02/0x03): %d", rate);
-            } else {
+            }
+            else
+            {
                 ESP_LOGW(TAG, "Failed to read sensor rate registers (0x02/0x03)");
             }
             uint8_t meas_cfg_val = 0;
@@ -77,7 +86,7 @@ namespace esphome
             }
         }
 
-        void XensivPasCO2I2C::gpio_intr(XensivPasCO2I2C *arg)
+        void XensivPasCO2I2C::gpio_intr_(XensivPasCO2I2C *arg)
         {
             // ISR - keep this minimal, no logging in ISR!
             arg->read_co2_ppm();
@@ -114,11 +123,11 @@ namespace esphome
             // Rate is stored in 12 bits across two registers (0x02 and 0x03)
             // Register 0x02: bits [11:8] (upper 4 bits)
             // Register 0x03: bits [7:0] (lower 8 bits)
-            uint8_t rate_h = (rate >> 8) & 0x0F;  // Upper 4 bits (mask to 12-bit max)
-            uint8_t rate_l = rate & 0xFF;          // Lower 8 bits
-            
+            uint8_t rate_h = (rate >> 8) & 0x0F; // Upper 4 bits (mask to 12-bit max)
+            uint8_t rate_l = rate & 0xFF;        // Lower 8 bits
+
             ESP_LOGD(TAG, "Setting sensor rate to %d seconds (0x%02X%02X)", rate, rate_h, rate_l);
-            
+
             if (this->write_byte(0x02, rate_h) && this->write_byte(0x03, rate_l))
             {
                 ESP_LOGCONFIG(TAG, "Sensor rate set to %d seconds", rate);

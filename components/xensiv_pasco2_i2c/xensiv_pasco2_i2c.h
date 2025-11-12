@@ -18,7 +18,8 @@ class XensivPasCO2I2C : public PollingComponent, public i2c::I2CDevice, public s
   void set_interrupt_pin(InternalGPIOPin *pin) { interrupt_pin_ = pin; }
   
  protected:
-  static void gpio_intr(XensivPasCO2I2C *arg);
+  static void gpio_intr_(XensivPasCO2I2C *arg);
+  static void setup_sensor_(XensivPasCO2I2C *arg);
   
   float co2_ppm_{0.0f};
   uint16_t version_{2};
