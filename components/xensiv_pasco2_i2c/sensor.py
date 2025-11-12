@@ -13,6 +13,7 @@ CODEOWNERS = ["@goram"]
 DEPENDENCIES = ["i2c"]
 
 CONF_INTERRUPT_PIN = "interrupt_pin"
+CONF_SENSOR_RATE = "sensor_rate"
 
 xensiv_pasco2_i2c_ns = cg.esphome_ns.namespace("xensiv_pasco2_i2c")
 XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
@@ -30,6 +31,7 @@ CONFIG_SCHEMA = (
     .extend(
         {
             cv.Optional(CONF_INTERRUPT_PIN): pins.internal_gpio_input_pin_schema,
+            cv.Optional(CONF_SENSOR_RATE, default=10): cv.int_range(min=5, max=4905),
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -46,3 +48,6 @@ async def to_code(config):
     if CONF_INTERRUPT_PIN in config:
         pin = await cg.gpio_pin_expression(config[CONF_INTERRUPT_PIN])
         cg.add(var.set_interrupt_pin(pin))
+
+    if CONF_SENSOR_RATE in config:
+        cg.add(var.set_sensor_rate_value(config[CONF_SENSOR_RATE]))

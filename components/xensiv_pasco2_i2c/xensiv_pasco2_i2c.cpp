@@ -31,7 +31,7 @@ namespace esphome
 
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
-            arg->set_sensor_rate_(15);
+            arg->set_sensor_rate_(sensor_rate_);
             arg->set_continuous_operation_mode_with_interrupt_();
 
             // Set up interrupt pin if configured
