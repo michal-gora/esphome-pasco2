@@ -31,9 +31,6 @@ namespace esphome
 
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
-            // Additional sensor setup if needed
-            delay(3000); // Wait 3 seconds for reset to complete
-
             arg->set_sensor_rate_(15);
             arg->set_continuous_operation_mode_with_interrupt_();
 
