@@ -50,39 +50,40 @@ namespace esphome
             
         }
 
-        void XensivPasCO2I2C::update()
-        {
-            ESP_LOGD(TAG, "Updating XensivPasCO2I2C component");
-
-            // // Check if interrupt triggered
-            // if (this->data_ready_) {
-            //     ESP_LOGD(TAG, "Data ready from interrupt");
-            //     this->data_ready_ = false;
-            // }
-
-            // set_continuous_operation_mode_with_interrupt_();
-            // this->read_co2_ppm();
-
-            uint8_t rate_h = 0, rate_l = 0;
-            if (this->read_bytes(0x02, &rate_h, 1) && this->read_bytes(0x03, &rate_l, 1))
-            {
-                int16_t rate = (static_cast<int16_t>(rate_h) << 8) | rate_l;
-                ESP_LOGD(TAG, "Sensor rate (0x02/0x03): %d", rate);
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Failed to read sensor rate registers (0x02/0x03)");
-            }
-            uint8_t meas_cfg_val = 0;
-            if (this->read_bytes(0x04, &meas_cfg_val, 1))
-            {
-                ESP_LOGD(TAG, "MEAS_CFG (0x04): 0x%02X", meas_cfg_val);
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Failed to read MEAS_CFG register (0x04)");
-            }
-        }
+        // Commented out - was used with PollingComponent, kept for possible reuse
+        // void XensivPasCO2I2C::update()
+        // {
+        //     ESP_LOGD(TAG, "Updating XensivPasCO2I2C component");
+        //
+        //     // Check if interrupt triggered
+        //     // if (this->data_ready_) {
+        //     //     ESP_LOGD(TAG, "Data ready from interrupt");
+        //     //     this->data_ready_ = false;
+        //     // }
+        //
+        //     // set_continuous_operation_mode_with_interrupt_();
+        //     // this->read_co2_ppm();
+        //
+        //     uint8_t rate_h = 0, rate_l = 0;
+        //     if (this->read_bytes(0x02, &rate_h, 1) && this->read_bytes(0x03, &rate_l, 1))
+        //     {
+        //         int16_t rate = (static_cast<int16_t>(rate_h) << 8) | rate_l;
+        //         ESP_LOGD(TAG, "Sensor rate (0x02/0x03): %d", rate);
+        //     }
+        //     else
+        //     {
+        //         ESP_LOGW(TAG, "Failed to read sensor rate registers (0x02/0x03)");
+        //     }
+        //     uint8_t meas_cfg_val = 0;
+        //     if (this->read_bytes(0x04, &meas_cfg_val, 1))
+        //     {
+        //         ESP_LOGD(TAG, "MEAS_CFG (0x04): 0x%02X", meas_cfg_val);
+        //     }
+        //     else
+        //     {
+        //         ESP_LOGW(TAG, "Failed to read MEAS_CFG register (0x04)");
+        //     }
+        // }
 
         void XensivPasCO2I2C::gpio_intr_(XensivPasCO2I2C *arg)
         {

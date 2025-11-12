@@ -17,7 +17,7 @@ CONF_SENSOR_RATE = "sensor_rate"
 
 xensiv_pasco2_i2c_ns = cg.esphome_ns.namespace("xensiv_pasco2_i2c")
 XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
-    "XensivPasCO2I2C", cg.PollingComponent, i2c.I2CDevice
+    "XensivPasCO2I2C", cg.Component, i2c.I2CDevice
 )
 
 CONFIG_SCHEMA = (
@@ -34,7 +34,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_SENSOR_RATE, default=10): cv.int_range(min=5, max=4905),
         }
     )
-    .extend(cv.polling_component_schema("60s"))
+    .extend(cv.COMPONENT_SCHEMA)
     .extend(i2c.i2c_device_schema(0x28))
 )
 

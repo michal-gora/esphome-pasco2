@@ -37,6 +37,5 @@ i2c:
 sensor:
   - platform: xensiv_pasco2_i2c
     name: "CO2 Sensor"
-    update_interval: 60s
-    interrupt_pin: GPIO23  # Optional: adjust or remove if not using interrupt
+    interrupt_pin: GPIO23  # Required for interrupt-driven operation
     sensor_rate: 10  # Measurement rate in seconds
