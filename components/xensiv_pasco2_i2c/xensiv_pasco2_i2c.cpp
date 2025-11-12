@@ -47,6 +47,7 @@ namespace esphome
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
             }
+            
         }
 
         void XensivPasCO2I2C::update()
