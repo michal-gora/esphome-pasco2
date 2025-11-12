@@ -21,24 +21,27 @@ namespace esphome
             } else {
                 ESP_LOGW(TAG, "Failed to perform sensor soft reset");
             }
-            delay(3000); // Wait 3 seconds for reset to complete
+            // Run sensor initialization in a separate thread to avoid blocking the main thread
+            std::thread([this]() {
+                delay(3000); // Wait 3 seconds for reset to complete
 
-            set_sensor_rate_(10);
-            set_continuous_operation_mode_with_interrupt_();
+                set_sensor_rate_(10);
+                set_continuous_operation_mode_with_interrupt_();
 
-            // Set up interrupt pin if configured
-            if (this->interrupt_pin_ != nullptr)
-            {
-                this->interrupt_pin_->setup();
-                // Input only - sensor has push-pull output (high-active)
-                this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
-                this->interrupt_pin_->attach_interrupt(
-                    XensivPasCO2I2C::gpio_intr,
-                    this,
-                    gpio::INTERRUPT_RISING_EDGE // High-active interrupt
-                );
-                ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
-            }
+                // Set up interrupt pin if configured
+                if (this->interrupt_pin_ != nullptr)
+                {
+                    this->interrupt_pin_->setup();
+                    // Input only - sensor has push-pull output (high-active)
+                    this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
+                    this->interrupt_pin_->attach_interrupt(
+                        XensivPasCO2I2C::gpio_intr,
+                        this,
+                        gpio::INTERRUPT_RISING_EDGE // High-active interrupt
+                    );
+                    ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
+                }
+            }).detach();
 
         }
 
