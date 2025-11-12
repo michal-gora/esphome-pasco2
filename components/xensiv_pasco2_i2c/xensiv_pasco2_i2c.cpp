@@ -26,7 +26,7 @@ namespace esphome
                 ESP_LOGW(TAG, "Failed to perform sensor soft reset");
             }
             // Run sensor initialization in a separate thread to avoid blocking the main thread
-            std::thread(XensivPasCO2I2C::setup_sensor_, this).detach();
+            std::thread([this]() { XensivPasCO2I2C::setup_sensor_(this); }).detach();
         }
 
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
