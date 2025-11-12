@@ -50,4 +50,4 @@ async def to_code(config):
         cg.add(var.set_interrupt_pin(pin))
 
     if CONF_SENSOR_RATE in config:
-        cg.add(var.set_sensor_rate_value_(config[CONF_SENSOR_RATE]))
+        cg.add(var.set_sensor_rate_value(config[CONF_SENSOR_RATE]))
