@@ -1,0 +1,42 @@
+esphome:
+  name: test-pasco2
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Load custom components from the local components directory
+external_components:
+  - source:
+      type: local
+      path: components
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API (optional)
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: "YourSSID"
+  password: "YourPassword"
+
+# I2C Bus configuration
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+  id: bus_a
+
+# Custom component
+sensor:
+  - platform: xensiv_pasco2_i2c
+    name: "CO2 Sensor"
+    update_interval: 60s
+    interrupt_pin: GPIO23  # Optional: adjust or remove if not using interrupt
+    sensor_rate: 10  # Measurement rate in seconds

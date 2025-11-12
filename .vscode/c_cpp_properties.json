@@ -4,16 +4,29 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/mnt/c/Users/goramichalpa/Documents/Dev/esphome",
-                "/mnt/c/Users/goramichalpa/Documents/Dev/esphome/esphome",
-                "/mnt/c/Users/goramichalpa/Documents/Dev/esphome/esphome/components"
+                "${workspaceFolder}/.esphome/build/test-pasco2/src",
+                "${workspaceFolder}/.esphome/build/test-pasco2/src/esphome",
+                "${workspaceFolder}/.esphome/build/test-pasco2/src/esphome/core",
+                "${workspaceFolder}/.esphome/build/test-pasco2/src/esphome/components",
+                "/home/wsluser/.platformio/packages/framework-arduinoespressif32/cores/esp32",
+                "/home/wsluser/.platformio/packages/framework-arduinoespressif32/libraries",
+                "/home/wsluser/.platformio/packages/framework-espidf/components",
+                "/home/wsluser/.platformio/packages/toolchain-xtensa-esp-elf/xtensa-esp-elf/include",
+                "/home/wsluser/.platformio/packages/toolchain-xtensa-esp-elf/lib/gcc/xtensa-esp-elf/14.2.0/include"
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c17",
+            "defines": [
+                "ARDUINO_ARCH_ESP32",
+                "ESP32",
+                "USE_ESP32",
+                "USE_ARDUINO"
+            ],
+            "compilerPath": "/home/wsluser/.platformio/packages/toolchain-xtensa-esp-elf/bin/xtensa-esp32-elf-g++",
+            "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
-            "compilerArgs": []
+            "compileCommands": [
+                "${workspaceFolder}/.esphome/build/test-pasco2/.pioenvs/test-pasco2/compile_commands.json"
+            ]
         }
     ],
     "version": 4
