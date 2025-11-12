@@ -1,5 +1,6 @@
 #include "esphome/core/log.h"
 #include "xensiv_pasco2_i2c.h"
+#include <thread>
 
 namespace esphome
 {
