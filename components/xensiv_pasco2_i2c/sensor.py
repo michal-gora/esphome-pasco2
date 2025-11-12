@@ -6,7 +6,6 @@ from esphome.const import (
     DEVICE_CLASS_CARBON_DIOXIDE,
     STATE_CLASS_MEASUREMENT,
     UNIT_PARTS_PER_MILLION,
-    UNIT_SECONDS,
 )
 from esphome import pins
 
@@ -32,7 +31,10 @@ CONFIG_SCHEMA = (
     .extend(
         {
             cv.Optional(CONF_INTERRUPT_PIN): pins.internal_gpio_input_pin_schema,
-            cv.Optional(CONF_SENSOR_RATE, default=10): cv.int_range(min=5, max=4905, unit-of-measurement=UNIT_SECONDS)
+            cv.Optional(CONF_SENSOR_RATE, default="10s"): cv.All(
+                cv.positive_time_period_seconds,
+                cv.Range(min=cv.TimePeriod(seconds=5), max=cv.TimePeriod(seconds=4905))
+            ),
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
@@ -51,4 +53,5 @@ async def to_code(config):
         cg.add(var.set_interrupt_pin(pin))
 
     if CONF_SENSOR_RATE in config:
-        cg.add(var.set_sensor_rate_value(config[CONF_SENSOR_RATE]))
+        # Convert TimePeriod to total seconds
+        cg.add(var.set_sensor_rate_value(config[CONF_SENSOR_RATE].total_seconds))
