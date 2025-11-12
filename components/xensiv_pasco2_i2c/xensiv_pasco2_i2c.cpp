@@ -1,6 +1,5 @@
 #include "esphome/core/log.h"
 #include "xensiv_pasco2_i2c.h"
-#include <thread>
 
 namespace esphome
 {
@@ -25,8 +24,9 @@ namespace esphome
             {
                 ESP_LOGW(TAG, "Failed to perform sensor soft reset");
             }
-            // Run sensor initialization in a separate thread to avoid blocking the main thread
-            std::thread([this]() { XensivPasCO2I2C::setup_sensor_(this); }).detach();
+            
+            // Run sensor initialization after a delay to avoid blocking the main thread
+            this->set_timeout(3000, [this]() { XensivPasCO2I2C::setup_sensor_(this); });
         }
 
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
