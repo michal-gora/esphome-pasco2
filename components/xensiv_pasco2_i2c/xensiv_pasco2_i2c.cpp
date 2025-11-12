@@ -138,6 +138,23 @@ namespace esphome
                 ESP_LOGW(TAG, "Failed to set sensor rate");
                 return false;
             }
+            // Read back the sensor rate from the device
+            uint8_t rate_h_read = 0, rate_l_read = 0;
+            if (this->read_bytes(0x02, &rate_h_read, 1) && this->read_bytes(0x03, &rate_l_read, 1)) {
+                int16_t rate_read = ((static_cast<int16_t>(rate_h_read) & 0x0F) << 8) | rate_l_read;
+                if (rate_read != rate) {
+                    ESP_LOGW(TAG, "Sensor rate unchanged after write (still %d seconds)", rate_read);
+                    this->sensor_rate_ = rate_read;
+                    return false;
+                }else {
+                    ESP_LOGD(TAG, "Sensor rate verified at %d seconds", rate_read);
+                    this->sensor_rate_ = rate_read;
+                    return true;
+                }
+            } else {
+                ESP_LOGW(TAG, "Failed to read back sensor rate registers (0x02/0x03)");
+                return false;
+            }
         }
 
         bool XensivPasCO2I2C::single_shot_measure_co2_ppm_()
@@ -213,9 +230,12 @@ namespace esphome
         void XensivPasCO2I2C::dump_config()
         {
             ESP_LOGCONFIG(TAG, "XensivPasCO2I2C Component:");
-            ESP_LOGCONFIG(TAG, " Firmware Version: 0x%04X", this->version_);
+            ESP_LOGCONFIG(TAG, "  Firmware Version: 0x%04X", this->version_);
             LOG_I2C_DEVICE(this);
-            LOG_UPDATE_INTERVAL(this);
+            ESP_LOGCONFIG(TAG, "  Sensor Rate: %d seconds", this->sensor_rate_);
+            if (this->interrupt_pin_ != nullptr) {
+                LOG_PIN("  Interrupt Pin: ", this->interrupt_pin_);
+            }
             ESP_LOGCONFIG(TAG, "  Last CO2 Value: %.2f ppm", this->co2_ppm_);
         }
 
