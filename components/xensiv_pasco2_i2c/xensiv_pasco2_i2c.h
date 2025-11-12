@@ -30,7 +30,7 @@ namespace esphome
       bool set_continuous_operation_mode_with_interrupt_();
       bool single_shot_measure_co2_ppm_();
       void set_sensor_rate_value_(int16_t rate) { sensor_rate_ = rate; }
-      bool select_sensor_rate_(int16_t);
+      bool select_sensor_rate_();
 
       InternalGPIOPin *interrupt_pin_{nullptr};
       volatile bool data_ready_{false};

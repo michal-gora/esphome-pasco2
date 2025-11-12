@@ -31,7 +31,7 @@ namespace esphome
 
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
-            arg->select_sensor_rate_(sensor_rate_);
+            arg->select_sensor_rate_();
             arg->set_continuous_operation_mode_with_interrupt_();
 
             // Set up interrupt pin if configured
@@ -115,11 +115,12 @@ namespace esphome
             }
         }
 
-        bool XensivPasCO2I2C::select_sensor_rate_(int16_t rate)
+        bool XensivPasCO2I2C::select_sensor_rate_()
         {
             // Rate is stored in 12 bits across two registers (0x02 and 0x03)
             // Register 0x02: bits [11:8] (upper 4 bits)
             // Register 0x03: bits [7:0] (lower 8 bits)
+            rate = this->sensor_rate_;
             uint8_t rate_h = (rate >> 8) & 0x0F; // Upper 4 bits (mask to 12-bit max)
             uint8_t rate_l = rate & 0xFF;        // Lower 8 bits
 
