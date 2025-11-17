@@ -32,6 +32,7 @@ namespace esphome
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
             arg->select_sensor_rate_();
+            arg->setup_interrupt_();
             arg->set_operation_mode_();
 
             // Set up interrupt pin if configured
@@ -95,16 +96,27 @@ namespace esphome
             arg->write_byte(0x07, int_sts_clr_mask);
         }
 
-        bool XensivPasCO2I2C::set_operation_mode_()
+        bool XensivPasCO2I2C::setup_interrupt_()
         {
             // Set interrupt by writing 0x15 to register 0x08
             uint8_t int_cfg_value = 0x15;
-            bool int_success = this->write_byte(0x08, int_cfg_value);
+            if (this->write_byte(0x08, int_cfg_value))
+            {
+            ESP_LOGCONFIG(TAG, "Interrupt configured (INT_CFG=0x15)");
+            return true;
+            }
+            else
+            {
+            ESP_LOGW(TAG, "Failed to configure interrupt (INT_CFG=0x15)");
+            return false;
+            }
+        }
 
-
+        bool XensivPasCO2I2C::set_operation_mode_()
+        {
             if (this->operation_mode_ == 1) // Single-shot mode
             {
-                return true; // Single-shot mode setup done using single_shot_measure_co2_ppm()
+            return true; // Single-shot mode setup done using single_shot_measure_co2_ppm()
             }
             // Write 0x26 to MEAS_CFG register (0x04) to enable continuous measurement mode
             uint8_t meas_cfg_value = 0x26;
@@ -112,13 +124,13 @@ namespace esphome
 
             if (success && int_success)
             {
-                ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26) and interrupt configured (INT_CFG=0x15)");
-                return true;
+            ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26) and interrupt configured");
+            return true;
             }
             else
             {
-                ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode or configure interrupt");
-                return false;
+            ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode or configure interrupt");
+            return false;
             }
         }
 
@@ -186,6 +198,16 @@ namespace esphome
 
             uint8_t co2_ppm_val[2] = {0};
             uint8_t *meas_sts;
+
+            // Only set to continuous mode if requested and not already in continuous mode
+            if (this->operation_mode_ == 0) { // 0 = continuous mode
+                uint8_t current_meas_cfg = 0;
+                if (this->read_bytes(0x04, &current_meas_cfg, 1)) {
+                    if (current_meas_cfg != 0x26) {
+                        this->write_byte(0x04, 0x26); // Set to continuous mode
+                    }
+                }
+            }
 
             // DRDY flag check
             if (this->read_bytes(0x07, meas_sts, 1))
