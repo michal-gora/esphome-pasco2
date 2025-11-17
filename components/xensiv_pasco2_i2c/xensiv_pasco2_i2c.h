@@ -32,6 +32,7 @@ namespace esphome
       int8_t operation_mode_{0}; // (Default) 0 for continuous mode, 1 for single-shot
       bool set_operation_mode_();
       bool select_sensor_rate_();
+      bool setup_interrupt_();
 
       InternalGPIOPin *interrupt_pin_{nullptr};
       volatile bool data_ready_{false};
