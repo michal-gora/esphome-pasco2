@@ -64,4 +64,4 @@ async def to_code(config):
         cg.add(var.set_sensor_rate_value(config[CONF_SENSOR_RATE].total_seconds))
 
     if CONF_OPERATION_MODE in config:
-        cg.add(var.set_measurement_mode(config[CONF_OPERATION_MODE]))
+        cg.add(var.set_operation_mode(config[CONF_OPERATION_MODE]))

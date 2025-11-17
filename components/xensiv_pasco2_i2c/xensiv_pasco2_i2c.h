@@ -19,7 +19,7 @@ namespace esphome
 
       void set_interrupt_pin(InternalGPIOPin *pin) { interrupt_pin_ = pin; }
       void set_sensor_rate_value(int16_t rate) { sensor_rate_ = rate; }
-      void set_measurement_mode(int mode) { operation_mode_ = static_cast<int8_t>(mode); ESP_LOGD("xensiv_pasco2_i2c", "Measurement mode set to %d", operation_mode_); }
+      void set_operation_mode(int mode) { operation_mode_ = static_cast<int8_t>(mode); ESP_LOGD("xensiv_pasco2_i2c", "Measurement mode set to %d", operation_mode_); }
       bool single_shot_measure_co2_ppm();
       
       protected:
