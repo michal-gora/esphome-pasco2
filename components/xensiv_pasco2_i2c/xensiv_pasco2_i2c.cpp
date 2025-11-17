@@ -39,14 +39,14 @@ namespace esphome
             if (arg->interrupt_pin_ != nullptr)
             {
                 arg->interrupt_pin_->setup();
-                // Input only - sensor has push-pull output (high-active)
+                // Input only - sensor has push-pull output (active low)
                 arg->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
                 arg->interrupt_pin_->attach_interrupt(
                     XensivPasCO2I2C::gpio_intr_,
                     arg,
-                    gpio::INTERRUPT_RISING_EDGE // High-active interrupt
+                    gpio::INTERRUPT_FALLING_EDGE // Active low interrupt
                 );
-                ESP_LOGCONFIG(TAG, "  Interrupt pin configured (high-active)");
+                ESP_LOGCONFIG(TAG, "  Interrupt pin configured (active low)");
             }
             
         }
@@ -98,16 +98,16 @@ namespace esphome
 
         bool XensivPasCO2I2C::setup_interrupt_()
         {
-            // Set interrupt by writing 0x15 to register 0x08
-            uint8_t int_cfg_value = 0x15;
+            // Set interrupt by writing 0x05 to register 0x08 (active low)
+            uint8_t int_cfg_value = 0x05;
             if (this->write_byte(0x08, int_cfg_value))
             {
-            ESP_LOGCONFIG(TAG, "Interrupt configured (INT_CFG=0x15)");
+            ESP_LOGCONFIG(TAG, "Interrupt configured (INT_CFG=0x05, active low)");
             return true;
             }
             else
             {
-            ESP_LOGW(TAG, "Failed to configure interrupt (INT_CFG=0x15)");
+            ESP_LOGW(TAG, "Failed to configure interrupt (INT_CFG=0x05)");
             return false;
             }
         }
