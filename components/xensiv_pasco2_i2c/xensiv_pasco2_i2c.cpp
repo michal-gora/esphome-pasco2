@@ -62,7 +62,7 @@ namespace esphome
         {
             // Set interrupt: INT_FUNC=1 (data ready), INT_TYP=0 (active low)
             uint8_t int_cfg_value = (1 << XENSIV_PAS_GAS_REG_INT_CFG_INT_FUNC_POS) | 
-                                     (0 << XENSIV_PAS_GAS_REG_INT_CFG_INT_TYP_POS);
+                                     (0b010 << XENSIV_PAS_GAS_REG_INT_CFG_INT_TYP_POS);
             if (this->write_byte(XENSIV_PAS_GAS_REG_INT_CFG, int_cfg_value))
             {
                 ESP_LOGCONFIG(TAG, "Interrupt configured (active low, data ready)");
