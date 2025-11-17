@@ -29,9 +29,17 @@ namespace esphome
 
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
-            arg->select_sensor_rate_();
-            arg->setup_interrupt_();
-            arg->set_operation_mode_();
+            ESP_LOGCONFIG(TAG, "Starting sensor configuration...");
+            
+            if (!arg->select_sensor_rate_()) {
+                ESP_LOGE(TAG, "Failed to set sensor rate");
+            }
+            if (!arg->setup_interrupt_()) {
+                ESP_LOGE(TAG, "Failed to setup interrupt");
+            }
+            if (!arg->set_operation_mode_()) {
+                ESP_LOGE(TAG, "Failed to set operation mode");
+            }
 
             // Set up interrupt pin if configured
             if (arg->interrupt_pin_ != nullptr)
@@ -61,8 +69,8 @@ namespace esphome
         bool XensivPasCO2I2C::setup_interrupt_()
         {
             // Set interrupt: INT_FUNC=1 (data ready), INT_TYP=0 (active low)
-            uint8_t int_cfg_value = (1 << XENSIV_PAS_GAS_REG_INT_CFG_INT_FUNC_POS) | 
-                                     (0b010 << XENSIV_PAS_GAS_REG_INT_CFG_INT_TYP_POS);
+            uint8_t int_cfg_value = (0b010 << XENSIV_PAS_GAS_REG_INT_CFG_INT_FUNC_POS) | 
+                                     (0 << XENSIV_PAS_GAS_REG_INT_CFG_INT_TYP_POS);
             if (this->write_byte(XENSIV_PAS_GAS_REG_INT_CFG, int_cfg_value))
             {
                 ESP_LOGCONFIG(TAG, "Interrupt configured (active low, data ready)");
@@ -140,12 +148,10 @@ namespace esphome
 
         void XensivPasCO2I2C::read_co2_ppm()
         {
-            // Try reading x bytes starting from register 0x0 for debugging
-            const size_t debug_bytes_to_read = 17; // Set this variable to change how many bytes to read
-            uint8_t debug_data[debug_bytes_to_read] = {0};
+            ESP_LOGD(TAG, "Reading CO2 data...");
 
             uint8_t co2_ppm_val[2] = {0};
-            uint8_t *meas_sts;
+            uint8_t meas_sts = 0;
 
             // Only set to continuous mode if requested and not already in continuous mode
             if (this->operation_mode_ == 0) // 0 = continuous mode
@@ -164,11 +170,11 @@ namespace esphome
             }
 
             // DRDY flag check
-            if (this->read_bytes(XENSIV_PAS_GAS_REG_MEAS_STS, meas_sts, 1))
+            if (this->read_bytes(XENSIV_PAS_GAS_REG_MEAS_STS, &meas_sts, 1))
             {
                 // Get DRDY flag in MEAS_STS (bit 4)
-                bool drdy = (*meas_sts & XENSIV_PAS_GAS_REG_MEAS_STS_DRDY_MSK) != 0;
-                ESP_LOGD(TAG, "MEAS_STS: 0x%02X, DRDY: %s", *meas_sts, drdy ? "SET" : "NOT SET");
+                bool drdy = (meas_sts & XENSIV_PAS_GAS_REG_MEAS_STS_DRDY_MSK) != 0;
+                ESP_LOGD(TAG, "MEAS_STS: 0x%02X, DRDY: %s", meas_sts, drdy ? "SET" : "NOT SET");
 
                 if (drdy || true) // TODO fix
                 {
@@ -181,6 +187,10 @@ namespace esphome
                         this->co2_ppm_ = static_cast<float>(co2_raw);
                         this->publish_state(this->co2_ppm_);
                     }
+                    else
+                    {
+                        ESP_LOGW(TAG, "Failed to read CO2 concentration registers");
+                    }
                 }
                 else
                 {
@@ -191,20 +201,6 @@ namespace esphome
             {
                 ESP_LOGW(TAG, "Failed to read MEAS_STS register for DRDY check");
             }
-
-            // Raw data for debugging
-            // if (this->read_bytes(XENSIV_PAS_GAS_REG_PROD_ID, debug_data, debug_bytes_to_read))
-            // {
-            //     ESP_LOGD(TAG, "I2C raw data:");
-            //     for (size_t i = 0; i < debug_bytes_to_read; ++i)
-            //     {
-            //         ESP_LOGD(TAG, "  Byte %zu: 0x%02X", i, debug_data[i]);
-            //     }
-            // }
-            // else
-            // {
-            //     ESP_LOGW(TAG, "Failed to read I2C debug data from sensor");
-            // }
         }
 
         void XensivPasCO2I2C::dump_config()
