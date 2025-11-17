@@ -13,8 +13,8 @@ namespace esphome
 
             // Perform full sensor reset (reset sticky bits, set to idle state)
 
-            // Soft reset - write magic value 0xA3 to SENS_RST register to trigger reset
-            if (this->write_byte(XENSIV_PAS_GAS_REG_SENS_RST, 0xA3))
+            // Soft reset - use XENSIV_PASCO2_CMD_SOFT_RESET command
+            if (this->write_byte(XENSIV_PASCO2_REG_SENS_RST, XENSIV_PASCO2_CMD_SOFT_RESET))
             {
                 ESP_LOGCONFIG(TAG, "Sensor soft reset");
             }
@@ -63,15 +63,19 @@ namespace esphome
             arg->read_co2_ppm();
             ESP_LOGW(TAG, "Interrupt triggered - data ready");
             // Clear MEAS_STS INT_STS_CLR bit
-            arg->write_byte(XENSIV_PAS_GAS_REG_MEAS_STS, XENSIV_PAS_GAS_REG_MEAS_STS_INT_STS_CLR_MSK);
+            arg->write_byte(XENSIV_PASCO2_REG_MEAS_STS, XENSIV_PASCO2_REG_MEAS_STS_INT_STS_CLR_MSK);
         }
 
         bool XensivPasCO2I2C::setup_interrupt_()
         {
-            // Set interrupt: INT_FUNC=1 (data ready), INT_TYP=0 (active low)
-            uint8_t int_cfg_value = (0b010 << XENSIV_PAS_GAS_REG_INT_CFG_INT_FUNC_POS) | 
-                                     (0 << XENSIV_PAS_GAS_REG_INT_CFG_INT_TYP_POS);
-            if (this->write_byte(XENSIV_PAS_GAS_REG_INT_CFG, int_cfg_value))
+            // Configure interrupt: DRDY function (data ready), active low
+            xensiv_pasco2_interrupt_config_t int_cfg;
+            int_cfg.u = 0;
+            int_cfg.b.int_func = XENSIV_PASCO2_INTERRUPT_FUNCTION_DRDY;
+            int_cfg.b.int_typ = XENSIV_PASCO2_INTERRUPT_TYPE_LOW_ACTIVE;
+            int_cfg.b.alarm_typ = XENSIV_PASCO2_ALARM_TYPE_LOW_TO_HIGH;
+
+            if (this->write_byte(XENSIV_PASCO2_REG_INT_CFG, int_cfg.u))
             {
                 ESP_LOGCONFIG(TAG, "Interrupt configured (active low, data ready)");
                 return true;
@@ -85,14 +89,20 @@ namespace esphome
 
         bool XensivPasCO2I2C::set_operation_mode_()
         {
-            if (this->operation_mode_ == 1) // Single-shot mode
+            if (this->operation_mode_ == XENSIV_PASCO2_OP_MODE_SINGLE)
             {
                 return true; // Single-shot mode setup done using single_shot_measure_co2_ppm()
             }
-            // Set to continuous measurement mode: OP_MODE=2, BOC_CFG=1
-            uint8_t meas_cfg_value = (2 << XENSIV_PAS_GAS_REG_MEAS_CFG_OP_MODE_POS) | 
-                                      (1 << XENSIV_PAS_GAS_REG_MEAS_CFG_BOC_CFG_POS);
-            bool success = this->write_byte(XENSIV_PAS_GAS_REG_MEAS_CFG, meas_cfg_value);
+            
+            // Set to continuous measurement mode with automatic baseline offset compensation
+            xensiv_pasco2_measurement_config_t meas_cfg;
+            meas_cfg.u = 0;
+            meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS;
+            meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
+            meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
+            meas_cfg.b.pwm_outen = 0; // PWM output disabled
+
+            bool success = this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u);
 
             if (success)
             {
@@ -108,7 +118,7 @@ namespace esphome
 
         bool XensivPasCO2I2C::select_sensor_rate_()
         {
-            // Rate validation is done in sensor.py (5-4905 seconds)
+            // Rate validation is done in sensor.py (5-4095 seconds)
             // Rate is stored as 12-bit value across MEAS_RATE_H and MEAS_RATE_L registers
             uint16_t rate = this->sensor_rate_;
             uint8_t rate_h = (rate >> 8) & 0xFF; // Upper byte
@@ -116,11 +126,11 @@ namespace esphome
 
             ESP_LOGD(TAG, "Setting sensor rate to %d seconds", rate);
 
-            if (!this->write_byte(XENSIV_PAS_GAS_REG_MEAS_RATE_H, rate_h)) {
+            if (!this->write_byte(XENSIV_PASCO2_REG_MEAS_RATE_H, rate_h)) {
                 ESP_LOGE(TAG, "Failed to write MEAS_RATE_H");
                 return false;
             }
-            if (!this->write_byte(XENSIV_PAS_GAS_REG_MEAS_RATE_L, rate_l)) {
+            if (!this->write_byte(XENSIV_PASCO2_REG_MEAS_RATE_L, rate_l)) {
                 ESP_LOGE(TAG, "Failed to write MEAS_RATE_L");
                 return false;
             }
@@ -131,10 +141,15 @@ namespace esphome
 
         bool XensivPasCO2I2C::single_shot_measure_co2_ppm()
         {
-            // Start single-shot measurement: OP_MODE=1, BOC_CFG=1
-            uint8_t meas_cfg_value = (1 << XENSIV_PAS_GAS_REG_MEAS_CFG_OP_MODE_POS) | 
-                                      (1 << XENSIV_PAS_GAS_REG_MEAS_CFG_BOC_CFG_POS);
-            if (this->write_byte(XENSIV_PAS_GAS_REG_MEAS_CFG, meas_cfg_value))
+            // Start single-shot measurement with automatic baseline offset compensation
+            xensiv_pasco2_measurement_config_t meas_cfg;
+            meas_cfg.u = 0;
+            meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_SINGLE;
+            meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
+            meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
+            meas_cfg.b.pwm_outen = 0; // PWM output disabled
+
+            if (this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u))
             {
                 ESP_LOGCONFIG(TAG, "Sensor set to single-shot measurement mode");
                 return true;
@@ -151,36 +166,39 @@ namespace esphome
             ESP_LOGD(TAG, "Reading CO2 data...");
 
             uint8_t co2_ppm_val[2] = {0};
-            uint8_t meas_sts = 0;
+            xensiv_pasco2_meas_status_t meas_sts;
 
             // Only set to continuous mode if requested and not already in continuous mode
-            if (this->operation_mode_ == 0) // 0 = continuous mode
+            if (this->operation_mode_ == XENSIV_PASCO2_OP_MODE_CONTINUOUS)
             {
-                uint8_t current_meas_cfg = 0;
-                if (this->read_bytes(XENSIV_PAS_GAS_REG_MEAS_CFG, &current_meas_cfg, 1))
+                xensiv_pasco2_measurement_config_t current_meas_cfg;
+                if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_CFG, &current_meas_cfg.u, 1))
                 {
-                    // Build expected continuous mode value: OP_MODE=2, BOC_CFG=1
-                    uint8_t continuous_mode_value = (2 << XENSIV_PAS_GAS_REG_MEAS_CFG_OP_MODE_POS) | 
-                                                    (1 << XENSIV_PAS_GAS_REG_MEAS_CFG_BOC_CFG_POS);
-                    if (current_meas_cfg != continuous_mode_value)
+                    // Check if we're in continuous mode with auto BOC
+                    if (current_meas_cfg.b.op_mode != XENSIV_PASCO2_OP_MODE_CONTINUOUS ||
+                        current_meas_cfg.b.boc_cfg != XENSIV_PASCO2_BOC_CFG_AUTOMATIC)
                     {
-                        this->write_byte(XENSIV_PAS_GAS_REG_MEAS_CFG, continuous_mode_value);
+                        ESP_LOGW(TAG, "MEAS_CFG incorrect (mode: %d, boc: %d), reconfiguring", 
+                                 current_meas_cfg.b.op_mode, current_meas_cfg.b.boc_cfg);
+                        this->set_operation_mode_();
                     }
                 }
             }
 
-            // DRDY flag check
-            if (this->read_bytes(XENSIV_PAS_GAS_REG_MEAS_STS, &meas_sts, 1))
+            // Check DRDY flag
+            if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_STS, &meas_sts.u, 1))
             {
-                // Get DRDY flag in MEAS_STS (bit 4)
-                bool drdy = (meas_sts & XENSIV_PAS_GAS_REG_MEAS_STS_DRDY_MSK) != 0;
-                ESP_LOGD(TAG, "MEAS_STS: 0x%02X, DRDY: %s", meas_sts, drdy ? "SET" : "NOT SET");
+                ESP_LOGD(TAG, "MEAS_STS: 0x%02X, DRDY: %s, INT_STS: %s, ALARM: %s", 
+                         meas_sts.u, 
+                         meas_sts.b.drdy ? "SET" : "NOT SET",
+                         meas_sts.b.int_sts ? "SET" : "NOT SET",
+                         meas_sts.b.alarm ? "SET" : "NOT SET");
 
-                if (drdy || true) // TODO fix
+                if (meas_sts.b.drdy || true)
                 {
-                    if (this->read_bytes(XENSIV_PAS_GAS_REG_GASCONC_H, co2_ppm_val, 2))
+                    if (this->read_bytes(XENSIV_PASCO2_REG_CO2PPM_H, co2_ppm_val, 2))
                     {
-                        // Read GASCONC_H and GASCONC_L
+                        // Read CO2PPM_H and CO2PPM_L
                         uint8_t co2ppm_h = co2_ppm_val[0];
                         uint8_t co2ppm_l = co2_ppm_val[1];
                         int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
