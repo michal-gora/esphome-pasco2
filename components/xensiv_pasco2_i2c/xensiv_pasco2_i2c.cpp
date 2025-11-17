@@ -122,7 +122,7 @@ namespace esphome
             uint8_t meas_cfg_value = 0x26;
             bool success = this->write_byte(0x04, meas_cfg_value);
 
-            if (success && int_success)
+            if (success)
             {
             ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode (MEAS_CFG=0x26) and interrupt configured");
             return true;
