@@ -14,6 +14,7 @@ DEPENDENCIES = ["i2c"]
 
 CONF_INTERRUPT_PIN = "interrupt_pin"
 CONF_SENSOR_RATE = "sensor_rate"
+CONF_MEASUREMENT_MODE = "measurement_mode"
 
 xensiv_pasco2_i2c_ns = cg.esphome_ns.namespace("xensiv_pasco2_i2c")
 XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
@@ -35,6 +36,12 @@ CONFIG_SCHEMA = (
                 cv.positive_time_period_seconds,
                 cv.Range(min=cv.TimePeriod(seconds=5), max=cv.TimePeriod(seconds=4905))
             ),
+            cv.Optional(CONF_CONF_MEASUREMENT_MODE, default="normal"): cv.enum(
+                {
+                    "continuous": 0,
+                    "single_shot": 1,
+                }
+            ),
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
@@ -55,3 +62,6 @@ async def to_code(config):
     if CONF_SENSOR_RATE in config:
         # Convert TimePeriod to total seconds
         cg.add(var.set_sensor_rate_value(config[CONF_SENSOR_RATE].total_seconds))
+
+    if CONF_MEASUREMENT_MODE in config:
+        cg.add(var.set_measurement_mode(config[CONF_MEASUREMENT_MODE]))
