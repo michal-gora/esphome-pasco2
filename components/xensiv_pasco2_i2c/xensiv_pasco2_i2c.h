@@ -4,6 +4,8 @@
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/i2c/i2c.h"
 #include "esphome/core/gpio.h"
+#include "xensiv_pas_gas_regs.h"
+#include "xensiv_pas_gas_co2_regs.h"
 
 namespace esphome
 {
