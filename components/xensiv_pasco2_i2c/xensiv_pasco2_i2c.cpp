@@ -102,7 +102,7 @@ namespace esphome
             bool int_success = this->write_byte(0x08, int_cfg_value);
 
 
-            if (this->measurement_mode_ == 1) // Single-shot mode
+            if (this->operation_mode_ == 1) // Single-shot mode
             {
                 return true; // Single-shot mode setup done using single_shot_measure_co2_ppm()
             }
