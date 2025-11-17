@@ -14,7 +14,7 @@ DEPENDENCIES = ["i2c"]
 
 CONF_INTERRUPT_PIN = "interrupt_pin"
 CONF_SENSOR_RATE = "sensor_rate"
-CONF_OPERATION_MODE = "measurement_mode"
+CONF_OPERATION_MODE = "operation_mode"
 
 xensiv_pasco2_i2c_ns = cg.esphome_ns.namespace("xensiv_pasco2_i2c")
 XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
