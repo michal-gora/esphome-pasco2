@@ -29,6 +29,7 @@ namespace esphome
             else
             {
                 ESP_LOGW(TAG, "Failed to perform sensor soft reset");
+                this->mark_failed();
             }
 
             // Schedule sensor initialization after a delay to avoid blocking setup
@@ -95,10 +96,12 @@ namespace esphome
             if (!arg->setup_interrupt_())
             {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
+                arg->mark_failed();
             }
             if (!arg->update_operation_mode_())
             {
                 ESP_LOGE(TAG, "Failed to set operation mode");
+                arg->mark_failed();
             }
 
             // Set up interrupt pin if configured
@@ -115,18 +118,19 @@ namespace esphome
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (active low)");
             }
             
-            // Check if sensor is ready (non-blocking check for info only)
+            // Small delay to allow sensor to stabilize after configuration
+            delay(100);
+            
+            // Check if sensor is ready at the very end after all configuration
             if (arg->check_sensor_ready_())
             {
-                ESP_LOGCONFIG(TAG, "Sensor is ready and operational");
-                arg->initialized_ = true;      
+                arg->initialized_ = true;
+                ESP_LOGCONFIG(TAG, "Sensor initialization complete");
             }
             else
             {
-                ESP_LOGW(TAG, "Sensor ready check inconclusive - will verify during operation");
+                ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
             }
-            ESP_LOGCONFIG(TAG, "Sensor initialization complete");
-            
         }
 
         bool XensivPasCO2I2C::test_scratch_register_()
