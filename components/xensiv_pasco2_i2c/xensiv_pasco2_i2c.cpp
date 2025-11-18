@@ -22,9 +22,10 @@ namespace esphome
             {
                 ESP_LOGW(TAG, "Failed to perform sensor soft reset");
             }
-            
+
             // Schedule sensor initialization after a delay to avoid blocking setup
-            this->set_timeout(3000, [this]() { XensivPasCO2I2C::setup_sensor_(this); });
+            this->set_timeout(3000, [this]()
+                              { XensivPasCO2I2C::setup_sensor_(this); });
         }
 
         void XensivPasCO2I2C::loop()
@@ -35,13 +36,13 @@ namespace esphome
                 this->data_ready_ = false; // Clear flag
 
                 ESP_LOGD(TAG, "Processing interrupt - data ready");
-                
+
                 // Read CO2 data
                 this->read_co2_ppm();
-                
+
                 // Clear MEAS_STS INT_STS_CLR bit
                 this->write_byte(XENSIV_PASCO2_REG_MEAS_STS, XENSIV_PASCO2_REG_MEAS_STS_INT_STS_CLR_MSK);
-                
+
                 // Update operation mode if needed
                 this->update_operation_mode_();
             }
@@ -50,14 +51,17 @@ namespace esphome
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
             ESP_LOGCONFIG(TAG, "Starting sensor configuration...");
-            
-            if (!arg->select_sensor_rate_()) {
+
+            if (!arg->select_sensor_rate_())
+            {
                 ESP_LOGE(TAG, "Failed to set sensor rate");
             }
-            if (!arg->setup_interrupt_()) {
+            if (!arg->setup_interrupt_())
+            {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
             }
-            if (!arg->update_operation_mode_()) {
+            if (!arg->update_operation_mode_())
+            {
                 ESP_LOGE(TAG, "Failed to set operation mode");
             }
 
@@ -74,7 +78,6 @@ namespace esphome
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (active low)");
             }
-            
         }
 
         void XensivPasCO2I2C::gpio_intr_(XensivPasCO2I2C *arg)
@@ -103,27 +106,29 @@ namespace esphome
             }
         }
 
-        bool XensivPasCO2I2C::update_operation_mode_()
+        bool XensivPasCO2I2C::update_operation_mode_(bool refresh)
         {
-            
+
             // Set to continuous measurement mode with automatic baseline offset compensation
             xensiv_pasco2_measurement_config_t meas_cfg;
             meas_cfg.u = 0;
             if (this->operation_mode_ == XENSIV_PASCO2_OP_MODE_SINGLE)
             {
                 meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_IDLE; // Set to IDLE first before switching to SINGLE
-            }else{
+            }
+            else
+            {
                 meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS; // Continuous mode
             }
             meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
             meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
             meas_cfg.b.pwm_outen = 0; // PWM output disabled
-            
+
             bool success = this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u);
-            
+
             if (success)
             {
-                ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode");
+                ESP_LOGD(TAG, "Sensor set to continuous measurement mode");
                 return true;
             }
             else
@@ -139,21 +144,27 @@ namespace esphome
             // Rate is stored as 12-bit value across MEAS_RATE_H and MEAS_RATE_L registers
             uint16_t rate = this->sensor_rate_;
             uint8_t rate_h = (rate >> 8) & 0xFF; // Upper byte
-            uint8_t rate_l = rate & 0xFF;         // Lower byte
+            uint8_t rate_l = rate & 0xFF;        // Lower byte
 
             ESP_LOGD(TAG, "Setting sensor rate to %d seconds", rate);
 
-            if (!this->write_byte(XENSIV_PASCO2_REG_MEAS_RATE_H, rate_h)) {
+            if (!this->write_byte(XENSIV_PASCO2_REG_MEAS_RATE_H, rate_h))
+            {
                 ESP_LOGE(TAG, "Failed to write MEAS_RATE_H");
                 return false;
             }
-            if (!this->write_byte(XENSIV_PASCO2_REG_MEAS_RATE_L, rate_l)) {
+            if (!this->write_byte(XENSIV_PASCO2_REG_MEAS_RATE_L, rate_l))
+            {
                 ESP_LOGE(TAG, "Failed to write MEAS_RATE_L");
                 return false;
             }
-
-            ESP_LOGCONFIG(TAG, "Sensor rate set to %d seconds", rate);
-            return true;
+            if (update_operation_mode_(true)){
+                ESP_LOGCONFIG(TAG, "Sensor rate set to %d seconds", rate);
+                return true;
+            }else{
+                ESP_LOGW(TAG, "Failed to update operation mode after setting sensor rate");
+                return false;
+            }
         }
 
         bool XensivPasCO2I2C::single_shot_measure_co2_ppm()
@@ -168,12 +179,12 @@ namespace esphome
 
             if (this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u))
             {
-                ESP_LOGCONFIG(TAG, "Sensor set to single-shot measurement mode");
+                ESP_LOGD(TAG, "Starting single-shot measurement");
                 return true;
             }
             else
             {
-                ESP_LOGW(TAG, "Failed to set sensor to single-shot measurement mode");
+                ESP_LOGW(TAG, "Failed to start single-shot measurement");
                 return false;
             }
         }
@@ -195,7 +206,7 @@ namespace esphome
                     if (current_meas_cfg.b.op_mode != XENSIV_PASCO2_OP_MODE_CONTINUOUS ||
                         current_meas_cfg.b.boc_cfg != XENSIV_PASCO2_BOC_CFG_AUTOMATIC)
                     {
-                        ESP_LOGW(TAG, "MEAS_CFG incorrect (mode: %d, boc: %d), reconfiguring", 
+                        ESP_LOGW(TAG, "MEAS_CFG incorrect (mode: %d, boc: %d), reconfiguring",
                                  current_meas_cfg.b.op_mode, current_meas_cfg.b.boc_cfg);
                         this->update_operation_mode_();
                     }
@@ -205,8 +216,8 @@ namespace esphome
             // Check DRDY flag
             if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_STS, &meas_sts.u, 1))
             {
-                ESP_LOGD(TAG, "MEAS_STS: 0x%02X, DRDY: %s, INT_STS: %s, ALARM: %s", 
-                         meas_sts.u, 
+                ESP_LOGD(TAG, "MEAS_STS: 0x%02X, DRDY: %s, INT_STS: %s, ALARM: %s",
+                         meas_sts.u,
                          meas_sts.b.drdy ? "SET" : "NOT SET",
                          meas_sts.b.int_sts ? "SET" : "NOT SET",
                          meas_sts.b.alarm ? "SET" : "NOT SET");
@@ -244,7 +255,8 @@ namespace esphome
             ESP_LOGCONFIG(TAG, "  Firmware Version: 0x%04X", this->version_);
             LOG_I2C_DEVICE(this);
             ESP_LOGCONFIG(TAG, "  Sensor Rate: %d seconds", this->sensor_rate_);
-            if (this->interrupt_pin_ != nullptr) {
+            if (this->interrupt_pin_ != nullptr)
+            {
                 LOG_PIN("  Interrupt Pin: ", this->interrupt_pin_);
             }
             ESP_LOGCONFIG(TAG, "  Last CO2 Value: %.2f ppm", this->co2_ppm_);
