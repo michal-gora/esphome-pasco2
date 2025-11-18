@@ -52,7 +52,7 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Starting sensor configuration...");
 
-            if (!arg->select_sensor_rate_())
+            if (!arg->update_sensor_rate_())
             {
                 ESP_LOGE(TAG, "Failed to set sensor rate");
             }
@@ -112,18 +112,25 @@ namespace esphome
             // Set to continuous measurement mode with automatic baseline offset compensation
             xensiv_pasco2_measurement_config_t meas_cfg;
             meas_cfg.u = 0;
+            meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
+            meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
+            meas_cfg.b.pwm_outen = 0; // PWM output disabled
             if (this->operation_mode_ == XENSIV_PASCO2_OP_MODE_SINGLE)
             {
                 meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_IDLE; // Set to IDLE first before switching to SINGLE
             }
             else
             {
+                if(refresh){
+                    meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_IDLE;
+                    if(!this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u)){
+                        ESP_LOGW(TAG, "Failed to set sensor to IDLE mode before updating to continuous mode");
+                        return false;
+                    }
+                }
                 meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS; // Continuous mode
             }
-            meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
-            meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
-            meas_cfg.b.pwm_outen = 0; // PWM output disabled
-
+            
             bool success = this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u);
 
             if (success)
@@ -138,7 +145,7 @@ namespace esphome
             }
         }
 
-        bool XensivPasCO2I2C::select_sensor_rate_()
+        bool XensivPasCO2I2C::update_sensor_rate_()
         {
             // Rate validation is done in sensor.py (5-4095 seconds)
             // Rate is stored as 12-bit value across MEAS_RATE_H and MEAS_RATE_L registers
@@ -159,7 +166,7 @@ namespace esphome
                 return false;
             }
             if (update_operation_mode_(true)){
-                ESP_LOGCONFIG(TAG, "Sensor rate set to %d seconds", rate);
+                ESP_LOGD(TAG, "Sensor rate updated successfully");
                 return true;
             }else{
                 ESP_LOGW(TAG, "Failed to update operation mode after setting sensor rate");
