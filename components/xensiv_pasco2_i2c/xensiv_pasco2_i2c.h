@@ -21,7 +21,7 @@ namespace esphome
 
       void set_interrupt_pin(InternalGPIOPin *pin) { interrupt_pin_ = pin; }
       void set_sensor_rate_value(int16_t rate) { sensor_rate_ = rate; }
-      void set_operation_mode(int mode) { operation_mode_ = static_cast<xensiv_pasco2_op_mode_t>(mode); }
+      void set_operation_mode(bool mode) { continuous_operation_mode_ = mode; } // TODO
       bool measure_now();
       
       protected:
@@ -31,7 +31,7 @@ namespace esphome
       float co2_ppm_{0.0f};
       uint16_t version_{2};
       int16_t sensor_rate_{10}; // Default rate in seconds
-      xensiv_pasco2_op_mode_t operation_mode_{XENSIV_PASCO2_OP_MODE_CONTINUOUS}; // Default: continuous mode
+      bool continuous_operation_mode_{true}; // Default: continuous mode
       bool update_operation_mode_();
       bool update_sensor_rate_();
       bool setup_interrupt_();

@@ -115,7 +115,7 @@ namespace esphome
             meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
             meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
             meas_cfg.b.pwm_outen = 0; // PWM output disabled
-            if (this->operation_mode_ == XENSIV_PASCO2_OP_MODE_SINGLE)
+            if (!this->continuous_operation_mode_)
             {
                 meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_IDLE; // Set to IDLE first before switching to SINGLE
             }
@@ -191,7 +191,7 @@ namespace esphome
             xensiv_pasco2_meas_status_t meas_sts;
 
             // Only set to continuous mode if requested and not already in continuous mode
-            if (this->operation_mode_ == XENSIV_PASCO2_OP_MODE_CONTINUOUS)
+            if (this->continuous_operation_mode_)
             {
                 xensiv_pasco2_measurement_config_t current_meas_cfg;
                 if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_CFG, &current_meas_cfg.u, 1))
@@ -265,8 +265,7 @@ namespace esphome
             }
             
             ESP_LOGCONFIG(TAG, "  Operation Mode: %s", 
-                         this->operation_mode_ == XENSIV_PASCO2_OP_MODE_CONTINUOUS ? "Continuous" :
-                         this->operation_mode_ == XENSIV_PASCO2_OP_MODE_SINGLE ? "Single-shot" : "Idle");
+                         this->continuous_operation_mode_ ? "Continuous" : "Single-shot");
             
             ESP_LOGCONFIG(TAG, "  Measurement Rate: %d seconds", this->sensor_rate_);
         }
