@@ -68,6 +68,12 @@ namespace esphome
 
         void XensivPasCO2I2C::loop()
         {
+            // Only process data if sensor is initialized
+            if (!this->initialized_)
+            {
+                return;
+            }
+            
             // Check if data is ready via interrupt
             if (this->data_ready_)
             {
@@ -117,6 +123,18 @@ namespace esphome
                     gpio::INTERRUPT_FALLING_EDGE // Active low interrupt
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (active low)");
+            }
+            
+            // Check if sensor is ready
+            if (arg->check_sensor_ready_())
+            {
+                arg->initialized_ = true;
+                ESP_LOGCONFIG(TAG, "Sensor initialization complete");
+            }
+            else
+            {
+                ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
+                arg->mark_failed();
             }
         }
 
@@ -238,6 +256,42 @@ namespace esphome
                 ESP_LOGE(TAG, "Failed to write PRESS_REF_L");
                 return false;
             }
+            return true;
+        }
+
+        bool XensivPasCO2I2C::check_sensor_ready_()
+        {
+            xensiv_pasco2_status_t sens_sts;
+            
+            // Read sensor status register
+            if (!this->read_byte(XENSIV_PASCO2_REG_SENS_STS, &sens_sts.u))
+            {
+                ESP_LOGE(TAG, "Failed to read SENS_STS register");
+                return false;
+            }
+            
+            // Check if sensor is ready
+            if (!sens_sts.b.sen_rdy)
+            {
+                ESP_LOGW(TAG, "Sensor not ready (SEN_RDY bit is 0)");
+                return false;
+            }
+            
+            // Check for errors
+            if (sens_sts.b.iccerr)
+            {
+                ESP_LOGW(TAG, "Communication error detected (ICCERR)");
+            }
+            if (sens_sts.b.orvs)
+            {
+                ESP_LOGW(TAG, "Out-of-range VDD12V error (ORVS)");
+            }
+            if (sens_sts.b.ortmp)
+            {
+                ESP_LOGW(TAG, "Out-of-range temperature error (ORTMP)");
+            }
+            
+            ESP_LOGD(TAG, "Sensor is ready (SEN_RDY=1)");
             return true;
         }
 
