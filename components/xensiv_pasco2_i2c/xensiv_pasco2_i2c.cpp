@@ -107,7 +107,7 @@ namespace esphome
             }
         }
 
-        bool XensivPasCO2I2C::update_operation_mode_(bool refresh)
+        bool XensivPasCO2I2C::update_operation_mode_()
         {
 
             // Set to continuous measurement mode with automatic baseline offset compensation
@@ -122,13 +122,6 @@ namespace esphome
             }
             else
             {
-                if(refresh){
-                    meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_IDLE;
-                    if(!this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u)){
-                        ESP_LOGW(TAG, "Failed to set sensor to IDLE mode before updating to continuous mode");
-                        return false;
-                    }
-                }
                 meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS; // Continuous mode
             }
             
@@ -166,13 +159,6 @@ namespace esphome
                 ESP_LOGE(TAG, "Failed to write MEAS_RATE_L");
                 return false;
             }
-            // if (update_operation_mode_(true)){
-            //     ESP_LOGD(TAG, "Sensor rate updated successfully");
-            //     return true;
-            // }else{
-            //     ESP_LOGW(TAG, "Failed to update operation mode after setting sensor rate");
-            //     return false;
-            // }
             return true;
         }
 
