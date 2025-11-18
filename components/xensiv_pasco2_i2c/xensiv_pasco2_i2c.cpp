@@ -92,17 +92,6 @@ namespace esphome
                 ESP_LOGD(TAG, "Pressure compensation not configured, using sensor default");
             }
             
-            // Check if sensor is ready
-            if (arg->check_sensor_ready_())
-            {
-                arg->initialized_ = true;
-                ESP_LOGCONFIG(TAG, "Sensor initialization complete");
-            }
-            else
-            {
-                ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
-                arg->mark_failed();
-            }
             if (!arg->setup_interrupt_())
             {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
@@ -125,6 +114,18 @@ namespace esphome
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (active low)");
             }
+            
+            // Check if sensor is ready (non-blocking check for info only)
+            if (arg->check_sensor_ready_())
+            {
+                ESP_LOGCONFIG(TAG, "Sensor is ready and operational");
+                arg->initialized_ = true;      
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Sensor ready check inconclusive - will verify during operation");
+            }
+            ESP_LOGCONFIG(TAG, "Sensor initialization complete");
             
         }
 
