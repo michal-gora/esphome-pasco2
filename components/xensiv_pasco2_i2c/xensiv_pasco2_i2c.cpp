@@ -108,7 +108,7 @@ namespace esphome
             // Testing single shot measurement to finalize initialization
             arg->set_timeout(XENSIV_PASCO2_SINGLE_SHOT_DELAY_MS, [arg]()
                               {
-                if (!read_co2_ppm()) {
+                if (!arg->read_co2_ppm()) {
                     ESP_LOGW(TAG, "Failed to read first shot");
                 }
                 arg->initialized_ = true;
