@@ -38,8 +38,8 @@ CONFIG_SCHEMA = (
             ),
             cv.Optional(CONF_OPERATION_MODE, default="continuous"): cv.enum(
                 {
-                    "continuous": 0,
-                    "single_shot": 1,
+                    "single_shot": 0,
+                    "continuous": 1,
                 }
             ),
         }
