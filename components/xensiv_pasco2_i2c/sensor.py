@@ -48,7 +48,7 @@ CONFIG_SCHEMA = cv.Schema(
             }
         ),
         cv.Optional(CONF_PRESSURE_COMPENSATION): cv.pressure,
-        cv.Optional(CONF_AMBIENT_PRESSURE_COMPENSATION_SOURCE): cv.use_id(
+        cv.Optional(CONF_PRESSURE_COMPENSATION_SOURCE): cv.use_id(
                 sensor.Sensor
             ),
     }
