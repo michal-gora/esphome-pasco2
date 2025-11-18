@@ -37,7 +37,6 @@ namespace esphome
                               { XensivPasCO2I2C::setup_sensor_(this); });
         }
 
-        
         void XensivPasCO2I2C::loop()
         {
             // Only process data if sensor is initialized
@@ -45,7 +44,7 @@ namespace esphome
             {
                 return;
             }
-            
+
             // Check if data is ready via interrupt
             if (this->data_ready_)
             {
@@ -56,29 +55,29 @@ namespace esphome
 
                 // Clear MEAS_STS INT_STS_CLR bit
                 this->write_byte(XENSIV_PASCO2_REG_MEAS_STS, XENSIV_PASCO2_REG_MEAS_STS_INT_STS_CLR_MSK);
-                
+
                 // Update operation mode if needed
                 this->update_operation_mode_();
             }
         }
-        
+
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
             ESP_LOGCONFIG(TAG, "Starting sensor configuration...");
-            
+
             if (!arg->update_sensor_rate_())
             {
                 ESP_LOGE(TAG, "Failed to set sensor rate");
             }
-            
+
             // Set pressure compensation if configured
             if (arg->pressure_ref_ > 0)
             {
                 uint8_t press_h = (arg->pressure_ref_ >> 8) & 0xFF;
                 uint8_t press_l = arg->pressure_ref_ & 0xFF;
-                
+
                 ESP_LOGD(TAG, "Setting pressure compensation to %d Pa", arg->pressure_ref_);
-                
+
                 if (!arg->write_byte(XENSIV_PASCO2_REG_PRESS_REF_H, press_h))
                 {
                     ESP_LOGE(TAG, "Failed to write PRESS_REF_H");
@@ -92,58 +91,60 @@ namespace esphome
             {
                 ESP_LOGD(TAG, "Pressure compensation not configured, using sensor default");
             }
-            
+
             // Configure sensor interrupt register and GPIO pin if configured
             if (!arg->setup_interrupt_())
             {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
                 arg->mark_failed();
             }
-            
+
             if (!arg->update_operation_mode_())
             {
                 ESP_LOGE(TAG, "Failed to set operation mode");
                 arg->mark_failed();
             }
-            
-            // Check if sensor is ready at the very end after all configuration
-            if (arg->check_sensor_ready_())
-            {
-                arg->initialized_ = true;
-                ESP_LOGCONFIG(TAG, "Sensor initialization complete");
-            }
-            else
-            {
-                ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
-            }
+            this->set_timeout(XENSIV_PASCO2_SINGLE_SHOT_DELAY_MS, [this]()
+                              {
+                if (!read_measurement_()) {
+                    ESP_LOGW(TAG, "Failed to read first shot");
+                }
+                if (!this->set_rate_(this->get_update_interval() / 1000)) {
+                    ESP_LOGE(TAG, "Failed to enable continuous mode");
+                    this->error_code_ = MEASUREMENT_INIT_FAILED;
+                    this->mark_failed();
+                    return;
+                }
+                this->initialized_ = true;
+                ESP_LOGD(TAG, "Sensor initialized"); });
         }
 
         bool XensivPasCO2I2C::test_scratch_register_()
         {
             uint8_t read_val = 0;
-            
+
             // Write test pattern to scratch register
             if (!this->write_byte(XENSIV_PASCO2_REG_SCRATCH_PAD, XENSIV_PASCO2_COMM_TEST_VAL))
             {
                 ESP_LOGE(TAG, "Failed to write to scratch register");
                 return false;
             }
-            
+
             // Read back the value
             if (!this->read_byte(XENSIV_PASCO2_REG_SCRATCH_PAD, &read_val))
             {
                 ESP_LOGE(TAG, "Failed to read from scratch register");
                 return false;
             }
-            
+
             // Verify the value matches
             if (read_val != XENSIV_PASCO2_COMM_TEST_VAL)
             {
-                ESP_LOGE(TAG, "Scratch register test failed: expected 0x%02X, got 0x%02X", 
+                ESP_LOGE(TAG, "Scratch register test failed: expected 0x%02X, got 0x%02X",
                          XENSIV_PASCO2_COMM_TEST_VAL, read_val);
                 return false;
             }
-            
+
             ESP_LOGD(TAG, "Scratch register test passed");
             return true;
         }
@@ -152,7 +153,7 @@ namespace esphome
         {
             arg->data_ready_ = true;
         }
-        
+
         bool XensivPasCO2I2C::setup_interrupt_()
         {
             // Configure interrupt: DRDY function (data ready), active low
@@ -161,15 +162,15 @@ namespace esphome
             int_cfg.b.int_func = XENSIV_PASCO2_INTERRUPT_FUNCTION_DRDY;
             int_cfg.b.int_typ = XENSIV_PASCO2_INTERRUPT_TYPE_LOW_ACTIVE;
             int_cfg.b.alarm_typ = XENSIV_PASCO2_ALARM_TYPE_LOW_TO_HIGH;
-            
+
             if (!this->write_byte(XENSIV_PASCO2_REG_INT_CFG, int_cfg.u))
             {
                 ESP_LOGW(TAG, "Failed to configure interrupt register");
                 return false;
             }
-            
+
             ESP_LOGCONFIG(TAG, "Interrupt register configured (active low, data ready)");
-            
+
             // Set up interrupt pin if configured
             if (this->interrupt_pin_ != nullptr)
             {
@@ -183,7 +184,7 @@ namespace esphome
                 );
                 ESP_LOGCONFIG(TAG, "  Interrupt GPIO pin configured (active low)");
             }
-            
+
             return true;
         }
 
@@ -191,41 +192,41 @@ namespace esphome
         {
             if (this->continuous_operation_mode_)
             {
-            // Read current measurement config
-            xensiv_pasco2_measurement_config_t current_meas_cfg;
-            if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_CFG, &current_meas_cfg.u, 1))
-            {
-                if (current_meas_cfg.b.op_mode != XENSIV_PASCO2_OP_MODE_CONTINUOUS)
+                // Read current measurement config
+                xensiv_pasco2_measurement_config_t current_meas_cfg;
+                if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_CFG, &current_meas_cfg.u, 1))
                 {
-                // Set to continuous measurement mode with automatic baseline offset compensation
-                xensiv_pasco2_measurement_config_t meas_cfg;
-                meas_cfg.u = 0;
-                meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS;
-                meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
-                meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
-                meas_cfg.b.pwm_outen = 0; // PWM output disabled
+                    if (current_meas_cfg.b.op_mode != XENSIV_PASCO2_OP_MODE_CONTINUOUS)
+                    {
+                        // Set to continuous measurement mode with automatic baseline offset compensation
+                        xensiv_pasco2_measurement_config_t meas_cfg;
+                        meas_cfg.u = 0;
+                        meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS;
+                        meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
+                        meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
+                        meas_cfg.b.pwm_outen = 0; // PWM output disabled
 
-                bool success = this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u);
+                        bool success = this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u);
 
-                if (success)
-                {
-                    ESP_LOGD(TAG, "Sensor reverted to continuous measurement mode");
+                        if (success)
+                        {
+                            ESP_LOGD(TAG, "Sensor reverted to continuous measurement mode");
+                            return true;
+                        }
+                        else
+                        {
+                            ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+                            return false;
+                        }
+                    }
+                    // Already in continuous mode, nothing to do
                     return true;
                 }
                 else
                 {
-                    ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+                    ESP_LOGW(TAG, "Failed to read MEAS_CFG register");
                     return false;
                 }
-                }
-                // Already in continuous mode, nothing to do
-                return true;
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Failed to read MEAS_CFG register");
-                return false;
-            }
             }
             // continuous_operation_mode_ is false, nothing to do
             return true;
@@ -257,7 +258,7 @@ namespace esphome
         void XensivPasCO2I2C::set_pressure_compensation(uint16_t pressure_ref)
         {
             this->pressure_ref_ = pressure_ref;
-            
+
             // If sensor is already initialized, write the value immediately
             if (this->initialized_)
             {
@@ -291,21 +292,21 @@ namespace esphome
         bool XensivPasCO2I2C::check_sensor_ready_()
         {
             xensiv_pasco2_status_t sens_sts;
-            
+
             // Read sensor status register
             if (!this->read_byte(XENSIV_PASCO2_REG_SENS_STS, &sens_sts.u))
             {
                 ESP_LOGE(TAG, "Failed to read SENS_STS register");
                 return false;
             }
-            
+
             // Check if sensor is ready
             if (!sens_sts.b.sen_rdy)
             {
                 ESP_LOGW(TAG, "Sensor not ready (SEN_RDY bit is 0)");
                 return false;
             }
-            
+
             // Check for errors
             if (sens_sts.b.iccerr)
             {
@@ -319,7 +320,7 @@ namespace esphome
             {
                 ESP_LOGW(TAG, "Out-of-range temperature error (ORTMP)");
             }
-            
+
             ESP_LOGD(TAG, "Sensor is ready (SEN_RDY=1)");
             return true;
         }
@@ -371,7 +372,7 @@ namespace esphome
                         uint8_t co2ppm_l = co2_ppm_val[1];
                         int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
                         this->co2_ppm_ = static_cast<float>(co2_raw);
-                        
+
                         if (this->co2_sensor_ != nullptr)
                         {
                             this->co2_sensor_->publish_state(this->co2_ppm_);
@@ -397,17 +398,17 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "XENSIV PASCO2 CO2 Sensor:");
             LOG_I2C_DEVICE(this);
-            
+
             if (this->is_failed())
             {
                 ESP_LOGE(TAG, "Communication with PASCO2 failed!");
             }
-            
+
             if (this->co2_sensor_ != nullptr)
             {
                 LOG_SENSOR("  ", "CO2 Sensor", this->co2_sensor_);
             }
-            
+
             if (this->interrupt_pin_ != nullptr)
             {
                 LOG_PIN("  Interrupt Pin: ", this->interrupt_pin_);
@@ -416,22 +417,21 @@ namespace esphome
             {
                 ESP_LOGCONFIG(TAG, "  Interrupt Pin: Not configured");
             }
-            
-            ESP_LOGCONFIG(TAG, "  Operation Mode: %s", 
-                         this->continuous_operation_mode_ ? "Continuous" : "Single-shot");
-            
+
+            ESP_LOGCONFIG(TAG, "  Operation Mode: %s",
+                          this->continuous_operation_mode_ ? "Continuous" : "Single-shot");
+
             ESP_LOGCONFIG(TAG, "  Measurement Rate: %d seconds", this->sensor_rate_);
-            
+
             if (this->pressure_ref_ > 0)
             {
-                ESP_LOGCONFIG(TAG, "  Pressure Compensation: %d Pa (%.2f hPa)", 
-                             this->pressure_ref_, this->pressure_ref_ / 100.0f);
+                ESP_LOGCONFIG(TAG, "  Pressure Compensation: %d Pa (%.2f hPa)",
+                              this->pressure_ref_, this->pressure_ref_ / 100.0f);
             }
             else
             {
                 ESP_LOGCONFIG(TAG, "  Pressure Compensation: Using sensor default : 1015 hPa");
             }
         }
-
     }
 }
