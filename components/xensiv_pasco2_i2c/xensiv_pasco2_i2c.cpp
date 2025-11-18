@@ -145,7 +145,7 @@ namespace esphome
             }
             
             // Check if sensor is ready
-            if (arg->check_sensor_ready_() || true)
+            if (arg->check_sensor_ready_())
             {
                 arg->initialized_ = true;
                 ESP_LOGCONFIG(TAG, "Sensor initialization complete");
@@ -296,11 +296,11 @@ namespace esphome
             }
             
             // Check if sensor is ready
-            if (!sens_sts.b.sen_rdy)
-            {
-                ESP_LOGW(TAG, "Sensor not ready (SEN_RDY bit is 0)");
-                return false;
-            }
+            // if (!sens_sts.b.sen_rdy)
+            // {
+            //     ESP_LOGW(TAG, "Sensor not ready (SEN_RDY bit is 0)");
+            //     return false;
+            // }
             
             // Check for errors
             if (sens_sts.b.iccerr)
