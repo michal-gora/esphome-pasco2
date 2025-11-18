@@ -79,7 +79,7 @@ namespace esphome
 
         void XensivPasCO2I2C::gpio_intr_(XensivPasCO2I2C *arg)
         {
-            data_ready_ = true;
+            arg->data_ready_ = true;
         }
 
         bool XensivPasCO2I2C::setup_interrupt_()
