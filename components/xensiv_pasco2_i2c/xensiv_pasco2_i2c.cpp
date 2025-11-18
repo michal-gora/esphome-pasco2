@@ -83,6 +83,7 @@ namespace esphome
         void XensivPasCO2I2C::gpio_intr_(XensivPasCO2I2C *arg)
         {
             arg->data_ready_ = true;
+            ESP_LOGW(TAG, "Interrupt received - data ready");
         }
 
         bool XensivPasCO2I2C::setup_interrupt_()
