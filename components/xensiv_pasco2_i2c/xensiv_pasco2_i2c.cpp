@@ -104,18 +104,14 @@ namespace esphome
                 ESP_LOGE(TAG, "Failed to set operation mode");
                 arg->mark_failed();
             }
-            this->set_timeout(XENSIV_PASCO2_SINGLE_SHOT_DELAY_MS, [this]()
+            
+            // Testing single shot measurement to finalize initialization
+            arg->set_timeout(XENSIV_PASCO2_SINGLE_SHOT_DELAY_MS, [arg]()
                               {
-                if (!read_measurement_()) {
+                if (!read_co2_ppm()) {
                     ESP_LOGW(TAG, "Failed to read first shot");
                 }
-                if (!this->set_rate_(this->get_update_interval() / 1000)) {
-                    ESP_LOGE(TAG, "Failed to enable continuous mode");
-                    this->error_code_ = MEASUREMENT_INIT_FAILED;
-                    this->mark_failed();
-                    return;
-                }
-                this->initialized_ = true;
+                arg->initialized_ = true;
                 ESP_LOGD(TAG, "Sensor initialized"); });
         }
 
