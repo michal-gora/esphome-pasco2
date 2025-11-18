@@ -166,13 +166,14 @@ namespace esphome
                 ESP_LOGE(TAG, "Failed to write MEAS_RATE_L");
                 return false;
             }
-            if (update_operation_mode_(true)){
-                ESP_LOGD(TAG, "Sensor rate updated successfully");
-                return true;
-            }else{
-                ESP_LOGW(TAG, "Failed to update operation mode after setting sensor rate");
-                return false;
-            }
+            // if (update_operation_mode_(true)){
+            //     ESP_LOGD(TAG, "Sensor rate updated successfully");
+            //     return true;
+            // }else{
+            //     ESP_LOGW(TAG, "Failed to update operation mode after setting sensor rate");
+            //     return false;
+            // }
+            return true;
         }
 
         bool XensivPasCO2I2C::measure_now()
