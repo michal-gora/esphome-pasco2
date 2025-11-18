@@ -11,6 +11,14 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up XensivPasCO2I2C component");
 
+            // Test I2C communication first using scratch register
+            if (!this->test_scratch_register_())
+            {
+                ESP_LOGE(TAG, "I2C communication test failed");
+                this->mark_failed();
+                return;
+            }
+
             // Perform full sensor reset (reset sticky bits, set to idle state)
 
             // Soft reset - use XENSIV_PASCO2_CMD_SOFT_RESET command
@@ -24,8 +32,38 @@ namespace esphome
             }
 
             // Schedule sensor initialization after a delay to avoid blocking setup
-            this->set_timeout(3000, [this]()
+            this->set_timeout(XENSIV_PASCO2_SOFT_RESET_DELAY_MS, [this]()
                               { XensivPasCO2I2C::setup_sensor_(this); });
+        }
+
+        bool XensivPasCO2I2C::test_scratch_register_()
+        {
+            uint8_t read_val = 0;
+            
+            // Write test pattern to scratch register
+            if (!this->write_byte(XENSIV_PASCO2_REG_SCRATCH_PAD, XENSIV_PASCO2_COMM_TEST_VAL))
+            {
+                ESP_LOGE(TAG, "Failed to write to scratch register");
+                return false;
+            }
+            
+            // Read back the value
+            if (!this->read_byte(XENSIV_PASCO2_REG_SCRATCH_PAD, &read_val))
+            {
+                ESP_LOGE(TAG, "Failed to read from scratch register");
+                return false;
+            }
+            
+            // Verify the value matches
+            if (read_val != XENSIV_PASCO2_COMM_TEST_VAL)
+            {
+                ESP_LOGE(TAG, "Scratch register test failed: expected 0x%02X, got 0x%02X", 
+                         XENSIV_PASCO2_COMM_TEST_VAL, read_val);
+                return false;
+            }
+            
+            ESP_LOGD(TAG, "Scratch register test passed");
+            return true;
         }
 
         void XensivPasCO2I2C::loop()
