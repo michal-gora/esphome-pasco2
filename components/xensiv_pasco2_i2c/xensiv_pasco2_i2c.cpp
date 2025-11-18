@@ -35,8 +35,6 @@ namespace esphome
             {
                 this->data_ready_ = false; // Clear flag
 
-                ESP_LOGD(TAG, "Processing interrupt - data ready");
-
                 // Read CO2 data
                 this->read_co2_ppm();
 
