@@ -96,10 +96,6 @@ namespace esphome
             {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
             }
-            if (!arg->update_operation_mode_())
-            {
-                ESP_LOGE(TAG, "Failed to set operation mode");
-            }
             // Check if sensor is ready
             if (arg->check_sensor_ready_())
             {
@@ -110,6 +106,10 @@ namespace esphome
             {
                 ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
                 arg->mark_failed();
+            }
+            if (!arg->update_operation_mode_())
+            {
+                ESP_LOGE(TAG, "Failed to set operation mode");
             }
 
             // Set up interrupt pin if configured
