@@ -64,18 +64,7 @@ namespace esphome
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
             ESP_LOGCONFIG(TAG, "Starting sensor configuration...");
-            // Check if sensor is ready
-            if (arg->check_sensor_ready_())
-            {
-                arg->initialized_ = true;
-                ESP_LOGCONFIG(TAG, "Sensor initialization complete");
-            }
-            else
-            {
-                ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
-                arg->mark_failed();
-            }
-
+            
             if (!arg->update_sensor_rate_())
             {
                 ESP_LOGE(TAG, "Failed to set sensor rate");
@@ -101,6 +90,17 @@ namespace esphome
             else
             {
                 ESP_LOGD(TAG, "Pressure compensation not configured, using sensor default");
+            }
+            // Check if sensor is ready
+            if (arg->check_sensor_ready_())
+            {
+                arg->initialized_ = true;
+                ESP_LOGCONFIG(TAG, "Sensor initialization complete");
+            }
+            else
+            {
+                ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
+                arg->mark_failed();
             }
             
             if (!arg->setup_interrupt_())
