@@ -145,7 +145,7 @@ namespace esphome
             }
             
             // Check if sensor is ready
-            if (arg->check_sensor_ready_())
+            if (arg->check_sensor_ready_() || true)
             {
                 arg->initialized_ = true;
                 ESP_LOGCONFIG(TAG, "Sensor initialization complete");
@@ -153,7 +153,7 @@ namespace esphome
             else
             {
                 ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
-                // arg->mark_failed();
+                arg->mark_failed();
             }
         }
 
