@@ -45,7 +45,7 @@ CONFIG_SCHEMA = cv.Schema(
                 "continuous": 1,
             }
         ),
-        cv.Optional(CONF_AMBIENT_PRESSURE_COMPENSATION): cv.pressure,
+        cv.Optional(CONF_PRESSURE_COMPENSATION): cv.pressure,
     }
 ).extend(cv.COMPONENT_SCHEMA).extend(i2c.i2c_device_schema(0x28))
 
@@ -63,6 +63,10 @@ async def to_code(config):
         if key in config:
             sens = await sensor.new_sensor(config[key])
             cg.add(getattr(var, funcName)(sens))
+
+    if CONF_PRESSURE_COMPENSATION in config:
+        # cv.pressure returns value in Pascals (Pa)
+        cg.add(var.set_pressure_compensation(int(config[CONF_PRESSURE_COMPENSATION])))
     
     if CONF_INTERRUPT_PIN in config:
         pin = await cg.gpio_pin_expression(config[CONF_INTERRUPT_PIN])
