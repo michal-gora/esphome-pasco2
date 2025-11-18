@@ -23,6 +23,7 @@ namespace esphome
       void set_interrupt_pin(InternalGPIOPin *pin) { interrupt_pin_ = pin; }
       void set_sensor_rate_value(int16_t rate) { sensor_rate_ = rate; }
       void set_operation_mode(bool mode) { continuous_operation_mode_ = mode; }
+      void set_pressure_compensation(uint16_t pressure_ref) { pressure_ref_ = pressure_ref; }
       bool measure_now();
       
       protected:
@@ -32,11 +33,13 @@ namespace esphome
       sensor::Sensor *co2_sensor_{nullptr};
       float co2_ppm_{0.0f};
       uint16_t version_{2};
+      uint16_t pressure_ref_{0}; // Pressure reference in Pa (0 = use default from sensor)
       int16_t sensor_rate_{10}; // Default rate in seconds
       bool continuous_operation_mode_{true}; // Default: continuous mode
       bool test_scratch_register_();
       bool update_operation_mode_();
       bool update_sensor_rate_();
+      bool update_pressure_compensation_();
       bool setup_interrupt_();
 
       InternalGPIOPin *interrupt_pin_{nullptr};

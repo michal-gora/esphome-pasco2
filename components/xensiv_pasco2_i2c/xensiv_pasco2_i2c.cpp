@@ -92,6 +92,10 @@ namespace esphome
             {
                 ESP_LOGE(TAG, "Failed to set sensor rate");
             }
+            if (!arg->update_pressure_compensation_())
+            {
+                ESP_LOGE(TAG, "Failed to set pressure compensation");
+            }
             if (!arg->setup_interrupt_())
             {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
@@ -209,6 +213,34 @@ namespace esphome
             return true;
         }
 
+        bool XensivPasCO2I2C::update_pressure_compensation_()
+        {
+            // If pressure_ref_ is 0, skip setting (use sensor default)
+            if (this->pressure_ref_ == 0)
+            {
+                ESP_LOGD(TAG, "Pressure compensation not configured, using sensor default");
+                return true;
+            }
+
+            // Pressure reference is stored as 16-bit value in Pascal units
+            uint8_t press_h = (this->pressure_ref_ >> 8) & 0xFF; // Upper byte
+            uint8_t press_l = this->pressure_ref_ & 0xFF;        // Lower byte
+
+            ESP_LOGD(TAG, "Setting pressure compensation to %d Pa", this->pressure_ref_);
+
+            if (!this->write_byte(XENSIV_PASCO2_REG_PRESS_REF_H, press_h))
+            {
+                ESP_LOGE(TAG, "Failed to write PRESS_REF_H");
+                return false;
+            }
+            if (!this->write_byte(XENSIV_PASCO2_REG_PRESS_REF_L, press_l))
+            {
+                ESP_LOGE(TAG, "Failed to write PRESS_REF_L");
+                return false;
+            }
+            return true;
+        }
+
         bool XensivPasCO2I2C::measure_now()
         {
             // Start single-shot measurement with automatic baseline offset compensation
@@ -306,6 +338,16 @@ namespace esphome
                          this->continuous_operation_mode_ ? "Continuous" : "Single-shot");
             
             ESP_LOGCONFIG(TAG, "  Measurement Rate: %d seconds", this->sensor_rate_);
+            
+            if (this->pressure_ref_ > 0)
+            {
+                ESP_LOGCONFIG(TAG, "  Pressure Compensation: %d Pa (%.2f hPa)", 
+                             this->pressure_ref_, this->pressure_ref_ / 100.0f);
+            }
+            else
+            {
+                ESP_LOGCONFIG(TAG, "  Pressure Compensation: Using sensor default : 1015 hPa");
+            }
         }
 
     }

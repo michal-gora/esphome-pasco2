@@ -17,6 +17,7 @@ DEPENDENCIES = ["i2c"]
 CONF_INTERRUPT_PIN = "interrupt_pin"
 CONF_SENSOR_RATE = "sensor_rate"
 CONF_OPERATION_MODE = "operation_mode"
+CONF_PRESSURE_COMPENSATION = "pressure_compensation"
 
 xensiv_pasco2_i2c_ns = cg.esphome_ns.namespace("xensiv_pasco2_i2c")
 XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
@@ -44,6 +45,7 @@ CONFIG_SCHEMA = cv.Schema(
                 "continuous": 1,
             }
         ),
+        cv.Optional(CONF_AMBIENT_PRESSURE_COMPENSATION): cv.pressure,
     }
 ).extend(cv.COMPONENT_SCHEMA).extend(i2c.i2c_device_schema(0x28))
 
