@@ -36,10 +36,12 @@ namespace esphome
       uint16_t pressure_ref_{0}; // Pressure reference in Pa (0 = use default from sensor)
       int16_t sensor_rate_{10}; // Default rate in seconds
       bool continuous_operation_mode_{true}; // Default: continuous mode
+      bool initialized_{false}; // Sensor initialization complete flag
       bool test_scratch_register_();
       bool update_operation_mode_();
       bool update_sensor_rate_();
       bool update_pressure_compensation_();
+      bool check_sensor_ready_();
       bool setup_interrupt_();
 
       InternalGPIOPin *interrupt_pin_{nullptr};

@@ -18,6 +18,8 @@ CONF_INTERRUPT_PIN = "interrupt_pin"
 CONF_SENSOR_RATE = "sensor_rate"
 CONF_OPERATION_MODE = "operation_mode"
 CONF_PRESSURE_COMPENSATION = "pressure_compensation"
+CONF_PRESSURE_COMPENSATION_SOURCE = "pressure_compensation_source"
+
 
 xensiv_pasco2_i2c_ns = cg.esphome_ns.namespace("xensiv_pasco2_i2c")
 XensivPasCO2I2C = xensiv_pasco2_i2c_ns.class_(
@@ -46,6 +48,9 @@ CONFIG_SCHEMA = cv.Schema(
             }
         ),
         cv.Optional(CONF_PRESSURE_COMPENSATION): cv.pressure,
+        cv.Optional(CONF_AMBIENT_PRESSURE_COMPENSATION_SOURCE): cv.use_id(
+                sensor.Sensor
+            ),
     }
 ).extend(cv.COMPONENT_SCHEMA).extend(i2c.i2c_device_schema(0x28))
 
@@ -67,6 +72,12 @@ async def to_code(config):
     if CONF_PRESSURE_COMPENSATION in config:
         # cv.pressure returns value in Pascals (Pa)
         cg.add(var.set_pressure_compensation(int(config[CONF_PRESSURE_COMPENSATION])))
+
+    if CONF_PRESSURE_COMPENSATION_SOURCE in config:
+        sens = await cg.get_variable(
+            config[CONF_PRESSURE_COMPENSATION_SOURCE], sensor.Sensor
+        )
+        cg.add(var.set_pressure_compensation_source(sens))
     
     if CONF_INTERRUPT_PIN in config:
         pin = await cg.gpio_pin_expression(config[CONF_INTERRUPT_PIN])
