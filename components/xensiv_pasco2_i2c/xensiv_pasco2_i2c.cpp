@@ -108,34 +108,46 @@ namespace esphome
 
         bool XensivPasCO2I2C::update_operation_mode_()
         {
+            if (this->continuous_operation_mode_)
+            {
+            // Read current measurement config
+            xensiv_pasco2_measurement_config_t current_meas_cfg;
+            if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_CFG, &current_meas_cfg.u, 1))
+            {
+                if (current_meas_cfg.b.op_mode != XENSIV_PASCO2_OP_MODE_CONTINUOUS)
+                {
+                // Set to continuous measurement mode with automatic baseline offset compensation
+                xensiv_pasco2_measurement_config_t meas_cfg;
+                meas_cfg.u = 0;
+                meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS;
+                meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
+                meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
+                meas_cfg.b.pwm_outen = 0; // PWM output disabled
 
-            // Set to continuous measurement mode with automatic baseline offset compensation
-            xensiv_pasco2_measurement_config_t meas_cfg;
-            meas_cfg.u = 0;
-            meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
-            meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
-            meas_cfg.b.pwm_outen = 0; // PWM output disabled
-            if (!this->continuous_operation_mode_)
-            {
-                meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_IDLE; // Set to IDLE first before switching to SINGLE
-            }
-            else
-            {
-                meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS; // Continuous mode
-            }
-            
-            bool success = this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u);
+                bool success = this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u);
 
-            if (success)
-            {
-                ESP_LOGD(TAG, "Sensor set to continuous measurement mode");
+                if (success)
+                {
+                    ESP_LOGD(TAG, "Sensor set to continuous measurement mode");
+                    return true;
+                }
+                else
+                {
+                    ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+                    return false;
+                }
+                }
+                // Already in continuous mode, nothing to do
                 return true;
             }
             else
             {
-                ESP_LOGW(TAG, "Failed to set sensor to continuous measurement mode");
+                ESP_LOGW(TAG, "Failed to read MEAS_CFG register");
                 return false;
             }
+            }
+            // continuous_operation_mode_ is false, nothing to do
+            return true;
         }
 
         bool XensivPasCO2I2C::update_sensor_rate_()
@@ -200,7 +212,7 @@ namespace esphome
                     if (current_meas_cfg.b.op_mode != XENSIV_PASCO2_OP_MODE_CONTINUOUS ||
                         current_meas_cfg.b.boc_cfg != XENSIV_PASCO2_BOC_CFG_AUTOMATIC)
                     {
-                        ESP_LOGW(TAG, "MEAS_CFG incorrect (mode: %d, boc: %d), reconfiguring",
+                        ESP_LOGD(TAG, "MEAS_CFG not in continuous mode with auto BOC (op_mode: %d, boc_cfg: %d); switching to correct configuration.",
                                  current_meas_cfg.b.op_mode, current_meas_cfg.b.boc_cfg);
                         this->update_operation_mode_();
                     }

@@ -11,7 +11,7 @@ from esphome.const import (
 )
 from esphome import pins
 
-CODEOWNERS = ["@goram"]
+CODEOWNERS = ["@michal-gora"]
 DEPENDENCIES = ["i2c"]
 
 CONF_INTERRUPT_PIN = "interrupt_pin"
