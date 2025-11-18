@@ -86,7 +86,7 @@ button:
     name: "Measure CO2 Now"
     on_press:
       - lambda: |-
-          id(co2_sensor).single_shot_measure_co2_ppm();
+          id(co2_sensor).measure_now();
 ```
 
 This is useful in `single_shot` operation mode or for triggering additional measurements in 

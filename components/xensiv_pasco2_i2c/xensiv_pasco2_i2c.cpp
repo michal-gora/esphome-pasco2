@@ -174,7 +174,7 @@ namespace esphome
             }
         }
 
-        bool XensivPasCO2I2C::single_shot_measure_co2_ppm()
+        bool XensivPasCO2I2C::measure_now()
         {
             // Start single-shot measurement with automatic baseline offset compensation
             xensiv_pasco2_measurement_config_t meas_cfg;
