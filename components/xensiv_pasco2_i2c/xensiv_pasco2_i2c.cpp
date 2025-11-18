@@ -128,7 +128,7 @@ namespace esphome
 
                 if (success)
                 {
-                    ESP_LOGD(TAG, "Sensor set to continuous measurement mode");
+                    ESP_LOGD(TAG, "Sensor reverted to continuous measurement mode");
                     return true;
                 }
                 else
@@ -201,23 +201,6 @@ namespace esphome
 
             uint8_t co2_ppm_val[2] = {0};
             xensiv_pasco2_meas_status_t meas_sts;
-
-            // // Only set to continuous mode if requested and not already in continuous mode
-            // if (this->continuous_operation_mode_)
-            // {
-            //     xensiv_pasco2_measurement_config_t current_meas_cfg;
-            //     if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_CFG, &current_meas_cfg.u, 1))
-            //     {
-            //         // Check if we're in continuous mode with auto BOC
-            //         if (current_meas_cfg.b.op_mode != XENSIV_PASCO2_OP_MODE_CONTINUOUS ||
-            //             current_meas_cfg.b.boc_cfg != XENSIV_PASCO2_BOC_CFG_AUTOMATIC)
-            //         {
-            //             ESP_LOGD(TAG, "MEAS_CFG not in continuous mode with auto BOC (op_mode: %d, boc_cfg: %d); switching to correct configuration.",
-            //                      current_meas_cfg.b.op_mode, current_meas_cfg.b.boc_cfg);
-            //             this->update_operation_mode_();
-            //         }
-            //     }
-            // }
 
             // Check DRDY flag
             if (this->read_bytes(XENSIV_PASCO2_REG_MEAS_STS, &meas_sts.u, 1))
