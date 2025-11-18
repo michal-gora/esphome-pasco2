@@ -112,8 +112,9 @@ namespace esphome
                     ESP_LOGW(TAG, "Sensor not ready after single shot");
                 }else{
                     arg->initialized_ = true;
-                    ESP_LOGD(TAG, "Sensor initialized"); });
+                    ESP_LOGD(TAG, "Sensor initialized"); 
                 }
+            });
         }
 
         bool XensivPasCO2I2C::test_scratch_register_()
