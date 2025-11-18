@@ -211,7 +211,7 @@ namespace esphome
                          meas_sts.b.int_sts ? "SET" : "NOT SET",
                          meas_sts.b.alarm ? "SET" : "NOT SET");
 
-                if (meas_sts.b.drdy || true)
+                if (meas_sts.b.drdy)
                 {
                     if (this->read_bytes(XENSIV_PASCO2_REG_CO2PPM_H, co2_ppm_val, 2))
                     {
