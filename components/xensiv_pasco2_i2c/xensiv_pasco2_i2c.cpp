@@ -118,9 +118,6 @@ namespace esphome
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (active low)");
             }
             
-            // Small delay to allow sensor to stabilize after configuration
-            delay(100);
-            
             // Check if sensor is ready at the very end after all configuration
             if (arg->check_sensor_ready_())
             {
