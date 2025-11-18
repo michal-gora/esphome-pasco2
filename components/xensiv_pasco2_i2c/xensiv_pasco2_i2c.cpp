@@ -23,8 +23,28 @@ namespace esphome
                 ESP_LOGW(TAG, "Failed to perform sensor soft reset");
             }
             
-            // Run sensor initialization after a delay to avoid blocking the main thread
+            // Schedule sensor initialization after a delay to avoid blocking setup
             this->set_timeout(3000, [this]() { XensivPasCO2I2C::setup_sensor_(this); });
+        }
+
+        void XensivPasCO2I2C::loop()
+        {
+            // Check if data is ready via interrupt
+            if (this->data_ready_)
+            {
+                this->data_ready_ = false; // Clear flag
+
+                ESP_LOGD(TAG, "Processing interrupt - data ready");
+                
+                // Read CO2 data
+                this->read_co2_ppm();
+                
+                // Clear MEAS_STS INT_STS_CLR bit
+                this->write_byte(XENSIV_PASCO2_REG_MEAS_STS, XENSIV_PASCO2_REG_MEAS_STS_INT_STS_CLR_MSK);
+                
+                // Update operation mode if needed
+                this->update_operation_mode_();
+            }
         }
 
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
@@ -59,12 +79,7 @@ namespace esphome
 
         void XensivPasCO2I2C::gpio_intr_(XensivPasCO2I2C *arg)
         {
-            // ISR - keep this minimal, no logging in ISR!
-            arg->read_co2_ppm();
-            ESP_LOGW(TAG, "Interrupt triggered - data ready");
-            // Clear MEAS_STS INT_STS_CLR bit
-            arg->write_byte(XENSIV_PASCO2_REG_MEAS_STS, XENSIV_PASCO2_REG_MEAS_STS_INT_STS_CLR_MSK);
-            arg->update_operation_mode_();
+            data_ready_ = true;
         }
 
         bool XensivPasCO2I2C::setup_interrupt_()

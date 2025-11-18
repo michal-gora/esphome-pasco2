@@ -15,6 +15,7 @@ namespace esphome
     {
     public:
       void setup() override;
+      void loop() override;
       void dump_config() override;
       void read_co2_ppm();
 
