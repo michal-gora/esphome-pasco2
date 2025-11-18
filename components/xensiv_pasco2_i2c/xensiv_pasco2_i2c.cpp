@@ -98,10 +98,29 @@ namespace esphome
             {
                 ESP_LOGE(TAG, "Failed to set sensor rate");
             }
-            if (!arg->update_pressure_compensation_())
+            
+            // Set pressure compensation if configured
+            if (arg->pressure_ref_ > 0)
             {
-                ESP_LOGE(TAG, "Failed to set pressure compensation");
+                uint8_t press_h = (arg->pressure_ref_ >> 8) & 0xFF;
+                uint8_t press_l = arg->pressure_ref_ & 0xFF;
+                
+                ESP_LOGD(TAG, "Setting pressure compensation to %d Pa", arg->pressure_ref_);
+                
+                if (!arg->write_byte(XENSIV_PASCO2_REG_PRESS_REF_H, press_h))
+                {
+                    ESP_LOGE(TAG, "Failed to write PRESS_REF_H");
+                }
+                if (!arg->write_byte(XENSIV_PASCO2_REG_PRESS_REF_L, press_l))
+                {
+                    ESP_LOGE(TAG, "Failed to write PRESS_REF_L");
+                }
             }
+            else
+            {
+                ESP_LOGD(TAG, "Pressure compensation not configured, using sensor default");
+            }
+            
             if (!arg->setup_interrupt_())
             {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
@@ -134,7 +153,7 @@ namespace esphome
             else
             {
                 ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
-                arg->mark_failed();
+                // arg->mark_failed();
             }
         }
 
@@ -231,32 +250,38 @@ namespace esphome
             return true;
         }
 
-        bool XensivPasCO2I2C::update_pressure_compensation_()
+        void XensivPasCO2I2C::set_pressure_compensation(uint16_t pressure_ref)
         {
-            // If pressure_ref_ is 0, skip setting (use sensor default)
-            if (this->pressure_ref_ == 0)
+            this->pressure_ref_ = pressure_ref;
+            
+            // If sensor is already initialized, write the value immediately
+            if (this->initialized_)
             {
-                ESP_LOGD(TAG, "Pressure compensation not configured, using sensor default");
-                return true;
-            }
+                // If pressure_ref is 0, skip setting (use sensor default)
+                if (pressure_ref == 0)
+                {
+                    ESP_LOGD(TAG, "Pressure compensation set to 0, using sensor default");
+                    return;
+                }
 
-            // Pressure reference is stored as 16-bit value in Pascal units
-            uint8_t press_h = (this->pressure_ref_ >> 8) & 0xFF; // Upper byte
-            uint8_t press_l = this->pressure_ref_ & 0xFF;        // Lower byte
+                // Pressure reference is stored as 16-bit value in Pascal units
+                uint8_t press_h = (pressure_ref >> 8) & 0xFF; // Upper byte
+                uint8_t press_l = pressure_ref & 0xFF;        // Lower byte
 
-            ESP_LOGD(TAG, "Setting pressure compensation to %d Pa", this->pressure_ref_);
+                ESP_LOGD(TAG, "Setting pressure compensation to %d Pa", pressure_ref);
 
-            if (!this->write_byte(XENSIV_PASCO2_REG_PRESS_REF_H, press_h))
-            {
-                ESP_LOGE(TAG, "Failed to write PRESS_REF_H");
-                return false;
+                if (!this->write_byte(XENSIV_PASCO2_REG_PRESS_REF_H, press_h))
+                {
+                    ESP_LOGE(TAG, "Failed to write PRESS_REF_H");
+                    return;
+                }
+                if (!this->write_byte(XENSIV_PASCO2_REG_PRESS_REF_L, press_l))
+                {
+                    ESP_LOGE(TAG, "Failed to write PRESS_REF_L");
+                    return;
+                }
             }
-            if (!this->write_byte(XENSIV_PASCO2_REG_PRESS_REF_L, press_l))
-            {
-                ESP_LOGE(TAG, "Failed to write PRESS_REF_L");
-                return false;
-            }
-            return true;
+            // If not initialized yet, value will be written during setup_sensor_()
         }
 
         bool XensivPasCO2I2C::check_sensor_ready_()

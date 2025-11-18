@@ -23,7 +23,7 @@ namespace esphome
       void set_interrupt_pin(InternalGPIOPin *pin) { interrupt_pin_ = pin; }
       void set_sensor_rate_value(int16_t rate) { sensor_rate_ = rate; }
       void set_operation_mode(bool mode) { continuous_operation_mode_ = mode; }
-      void set_pressure_compensation(uint16_t pressure_ref) { pressure_ref_ = pressure_ref; }
+      void set_pressure_compensation(uint16_t pressure_ref);
       bool measure_now();
       
       protected:
@@ -40,7 +40,6 @@ namespace esphome
       bool test_scratch_register_();
       bool update_operation_mode_();
       bool update_sensor_rate_();
-      bool update_pressure_compensation_();
       bool check_sensor_ready_();
       bool setup_interrupt_();
 
