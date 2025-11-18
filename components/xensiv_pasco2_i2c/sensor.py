@@ -3,7 +3,7 @@ import esphome.codegen as cg
 from esphome.components import sensor, i2c
 from esphome.const import (
     CONF_ID,
-    CONF_CO2
+    CONF_CO2,
     DEVICE_CLASS_CARBON_DIOXIDE,
     STATE_CLASS_MEASUREMENT,
     UNIT_PARTS_PER_MILLION,
