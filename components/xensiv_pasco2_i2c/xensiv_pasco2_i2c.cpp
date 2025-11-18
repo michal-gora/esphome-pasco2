@@ -36,36 +36,7 @@ namespace esphome
                               { XensivPasCO2I2C::setup_sensor_(this); });
         }
 
-        bool XensivPasCO2I2C::test_scratch_register_()
-        {
-            uint8_t read_val = 0;
-            
-            // Write test pattern to scratch register
-            if (!this->write_byte(XENSIV_PASCO2_REG_SCRATCH_PAD, XENSIV_PASCO2_COMM_TEST_VAL))
-            {
-                ESP_LOGE(TAG, "Failed to write to scratch register");
-                return false;
-            }
-            
-            // Read back the value
-            if (!this->read_byte(XENSIV_PASCO2_REG_SCRATCH_PAD, &read_val))
-            {
-                ESP_LOGE(TAG, "Failed to read from scratch register");
-                return false;
-            }
-            
-            // Verify the value matches
-            if (read_val != XENSIV_PASCO2_COMM_TEST_VAL)
-            {
-                ESP_LOGE(TAG, "Scratch register test failed: expected 0x%02X, got 0x%02X", 
-                         XENSIV_PASCO2_COMM_TEST_VAL, read_val);
-                return false;
-            }
-            
-            ESP_LOGD(TAG, "Scratch register test passed");
-            return true;
-        }
-
+        
         void XensivPasCO2I2C::loop()
         {
             // Only process data if sensor is initialized
@@ -84,15 +55,26 @@ namespace esphome
 
                 // Clear MEAS_STS INT_STS_CLR bit
                 this->write_byte(XENSIV_PASCO2_REG_MEAS_STS, XENSIV_PASCO2_REG_MEAS_STS_INT_STS_CLR_MSK);
-
+                
                 // Update operation mode if needed
                 this->update_operation_mode_();
             }
         }
-
+        
         void XensivPasCO2I2C::setup_sensor_(XensivPasCO2I2C *arg)
         {
             ESP_LOGCONFIG(TAG, "Starting sensor configuration...");
+            // Check if sensor is ready
+            if (arg->check_sensor_ready_())
+            {
+                arg->initialized_ = true;
+                ESP_LOGCONFIG(TAG, "Sensor initialization complete");
+            }
+            else
+            {
+                ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
+                arg->mark_failed();
+            }
 
             if (!arg->update_sensor_rate_())
             {
@@ -144,24 +126,43 @@ namespace esphome
                 ESP_LOGCONFIG(TAG, "  Interrupt pin configured (active low)");
             }
             
-            // Check if sensor is ready
-            if (arg->check_sensor_ready_())
+        }
+
+        bool XensivPasCO2I2C::test_scratch_register_()
+        {
+            uint8_t read_val = 0;
+            
+            // Write test pattern to scratch register
+            if (!this->write_byte(XENSIV_PASCO2_REG_SCRATCH_PAD, XENSIV_PASCO2_COMM_TEST_VAL))
             {
-                arg->initialized_ = true;
-                ESP_LOGCONFIG(TAG, "Sensor initialization complete");
+                ESP_LOGE(TAG, "Failed to write to scratch register");
+                return false;
             }
-            else
+            
+            // Read back the value
+            if (!this->read_byte(XENSIV_PASCO2_REG_SCRATCH_PAD, &read_val))
             {
-                ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
-                arg->mark_failed();
+                ESP_LOGE(TAG, "Failed to read from scratch register");
+                return false;
             }
+            
+            // Verify the value matches
+            if (read_val != XENSIV_PASCO2_COMM_TEST_VAL)
+            {
+                ESP_LOGE(TAG, "Scratch register test failed: expected 0x%02X, got 0x%02X", 
+                         XENSIV_PASCO2_COMM_TEST_VAL, read_val);
+                return false;
+            }
+            
+            ESP_LOGD(TAG, "Scratch register test passed");
+            return true;
         }
 
         void XensivPasCO2I2C::gpio_intr_(XensivPasCO2I2C *arg)
         {
             arg->data_ready_ = true;
         }
-
+        
         bool XensivPasCO2I2C::setup_interrupt_()
         {
             // Configure interrupt: DRDY function (data ready), active low
@@ -170,7 +171,7 @@ namespace esphome
             int_cfg.b.int_func = XENSIV_PASCO2_INTERRUPT_FUNCTION_DRDY;
             int_cfg.b.int_typ = XENSIV_PASCO2_INTERRUPT_TYPE_LOW_ACTIVE;
             int_cfg.b.alarm_typ = XENSIV_PASCO2_ALARM_TYPE_LOW_TO_HIGH;
-
+            
             if (this->write_byte(XENSIV_PASCO2_REG_INT_CFG, int_cfg.u))
             {
                 ESP_LOGCONFIG(TAG, "Interrupt configured (active low, data ready)");
@@ -296,11 +297,11 @@ namespace esphome
             }
             
             // Check if sensor is ready
-            // if (!sens_sts.b.sen_rdy)
-            // {
-            //     ESP_LOGW(TAG, "Sensor not ready (SEN_RDY bit is 0)");
-            //     return false;
-            // }
+            if (!sens_sts.b.sen_rdy)
+            {
+                ESP_LOGW(TAG, "Sensor not ready (SEN_RDY bit is 0)");
+                return false;
+            }
             
             // Check for errors
             if (sens_sts.b.iccerr)
