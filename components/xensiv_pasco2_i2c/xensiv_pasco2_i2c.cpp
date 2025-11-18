@@ -91,6 +91,15 @@ namespace esphome
             {
                 ESP_LOGD(TAG, "Pressure compensation not configured, using sensor default");
             }
+            
+            if (!arg->setup_interrupt_())
+            {
+                ESP_LOGE(TAG, "Failed to setup interrupt");
+            }
+            if (!arg->update_operation_mode_())
+            {
+                ESP_LOGE(TAG, "Failed to set operation mode");
+            }
             // Check if sensor is ready
             if (arg->check_sensor_ready_())
             {
@@ -101,15 +110,6 @@ namespace esphome
             {
                 ESP_LOGE(TAG, "Sensor initialization failed - sensor not ready");
                 arg->mark_failed();
-            }
-            
-            if (!arg->setup_interrupt_())
-            {
-                ESP_LOGE(TAG, "Failed to setup interrupt");
-            }
-            if (!arg->update_operation_mode_())
-            {
-                ESP_LOGE(TAG, "Failed to set operation mode");
             }
 
             // Set up interrupt pin if configured
