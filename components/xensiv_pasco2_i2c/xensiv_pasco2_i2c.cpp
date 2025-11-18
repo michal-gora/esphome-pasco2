@@ -37,7 +37,7 @@ namespace esphome
             if (!arg->setup_interrupt_()) {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
             }
-            if (!arg->set_operation_mode_()) {
+            if (!arg->update_operation_mode_()) {
                 ESP_LOGE(TAG, "Failed to set operation mode");
             }
 
@@ -64,6 +64,7 @@ namespace esphome
             ESP_LOGW(TAG, "Interrupt triggered - data ready");
             // Clear MEAS_STS INT_STS_CLR bit
             arg->write_byte(XENSIV_PASCO2_REG_MEAS_STS, XENSIV_PASCO2_REG_MEAS_STS_INT_STS_CLR_MSK);
+            arg->update_operation_mode_();
         }
 
         bool XensivPasCO2I2C::setup_interrupt_()
@@ -87,23 +88,24 @@ namespace esphome
             }
         }
 
-        bool XensivPasCO2I2C::set_operation_mode_()
+        bool XensivPasCO2I2C::update_operation_mode_()
         {
-            if (this->operation_mode_ == XENSIV_PASCO2_OP_MODE_SINGLE)
-            {
-                return true; // Single-shot mode setup done using single_shot_measure_co2_ppm()
-            }
             
             // Set to continuous measurement mode with automatic baseline offset compensation
             xensiv_pasco2_measurement_config_t meas_cfg;
             meas_cfg.u = 0;
-            meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS;
+            if (this->operation_mode_ == XENSIV_PASCO2_OP_MODE_SINGLE)
+            {
+                meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_IDLE; // Set to IDLE first before switching to SINGLE
+            }else{
+                meas_cfg.b.op_mode = XENSIV_PASCO2_OP_MODE_CONTINUOUS; // Continuous mode
+            }
             meas_cfg.b.boc_cfg = XENSIV_PASCO2_BOC_CFG_AUTOMATIC;
             meas_cfg.b.pwm_mode = XENSIV_PASCO2_PWM_MODE_SINGLE_PULSE;
             meas_cfg.b.pwm_outen = 0; // PWM output disabled
-
+            
             bool success = this->write_byte(XENSIV_PASCO2_REG_MEAS_CFG, meas_cfg.u);
-
+            
             if (success)
             {
                 ESP_LOGCONFIG(TAG, "Sensor set to continuous measurement mode");
@@ -180,7 +182,7 @@ namespace esphome
                     {
                         ESP_LOGW(TAG, "MEAS_CFG incorrect (mode: %d, boc: %d), reconfiguring", 
                                  current_meas_cfg.b.op_mode, current_meas_cfg.b.boc_cfg);
-                        this->set_operation_mode_();
+                        this->update_operation_mode_();
                     }
                 }
             }

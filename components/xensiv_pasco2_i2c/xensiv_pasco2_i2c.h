@@ -31,7 +31,7 @@ namespace esphome
       uint16_t version_{2};
       int16_t sensor_rate_{10}; // Default rate in seconds
       xensiv_pasco2_op_mode_t operation_mode_{XENSIV_PASCO2_OP_MODE_CONTINUOUS}; // Default: continuous mode
-      bool set_operation_mode_();
+      bool update_operation_mode_();
       bool select_sensor_rate_();
       bool setup_interrupt_();
 
