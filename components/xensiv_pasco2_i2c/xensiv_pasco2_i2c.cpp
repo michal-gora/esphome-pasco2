@@ -245,15 +245,30 @@ namespace esphome
 
         void XensivPasCO2I2C::dump_config()
         {
-            ESP_LOGCONFIG(TAG, "XensivPasCO2I2C Component:");
-            ESP_LOGCONFIG(TAG, "  Firmware Version: 0x%04X", this->version_);
+            ESP_LOGCONFIG(TAG, "XENSIV PASCO2 CO2 Sensor:");
             LOG_I2C_DEVICE(this);
-            ESP_LOGCONFIG(TAG, "  Sensor Rate: %d seconds", this->sensor_rate_);
+            
+            if (this->is_failed())
+            {
+                ESP_LOGE(TAG, "Communication with PASCO2 failed!");
+            }
+            
+            LOG_SENSOR("  ", "CO2 Sensor", this);
+            
             if (this->interrupt_pin_ != nullptr)
             {
                 LOG_PIN("  Interrupt Pin: ", this->interrupt_pin_);
             }
-            ESP_LOGCONFIG(TAG, "  Last CO2 Value: %.2f ppm", this->co2_ppm_);
+            else
+            {
+                ESP_LOGCONFIG(TAG, "  Interrupt Pin: Not configured");
+            }
+            
+            ESP_LOGCONFIG(TAG, "  Operation Mode: %s", 
+                         this->operation_mode_ == XENSIV_PASCO2_OP_MODE_CONTINUOUS ? "Continuous" :
+                         this->operation_mode_ == XENSIV_PASCO2_OP_MODE_SINGLE ? "Single-shot" : "Idle");
+            
+            ESP_LOGCONFIG(TAG, "  Measurement Rate: %d seconds", this->sensor_rate_);
         }
 
     }
