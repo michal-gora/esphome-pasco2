@@ -93,29 +93,17 @@ namespace esphome
                 ESP_LOGD(TAG, "Pressure compensation not configured, using sensor default");
             }
             
+            // Configure sensor interrupt register and GPIO pin if configured
             if (!arg->setup_interrupt_())
             {
                 ESP_LOGE(TAG, "Failed to setup interrupt");
                 arg->mark_failed();
             }
+            
             if (!arg->update_operation_mode_())
             {
                 ESP_LOGE(TAG, "Failed to set operation mode");
                 arg->mark_failed();
-            }
-
-            // Set up interrupt pin if configured
-            if (arg->interrupt_pin_ != nullptr)
-            {
-                arg->interrupt_pin_->setup();
-                // Input only - sensor has push-pull output (active low)
-                arg->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
-                arg->interrupt_pin_->attach_interrupt(
-                    XensivPasCO2I2C::gpio_intr_,
-                    arg,
-                    gpio::INTERRUPT_FALLING_EDGE // Active low interrupt
-                );
-                ESP_LOGCONFIG(TAG, "  Interrupt pin configured (active low)");
             }
             
             // Check if sensor is ready at the very end after all configuration
@@ -174,16 +162,29 @@ namespace esphome
             int_cfg.b.int_typ = XENSIV_PASCO2_INTERRUPT_TYPE_LOW_ACTIVE;
             int_cfg.b.alarm_typ = XENSIV_PASCO2_ALARM_TYPE_LOW_TO_HIGH;
             
-            if (this->write_byte(XENSIV_PASCO2_REG_INT_CFG, int_cfg.u))
+            if (!this->write_byte(XENSIV_PASCO2_REG_INT_CFG, int_cfg.u))
             {
-                ESP_LOGCONFIG(TAG, "Interrupt configured (active low, data ready)");
-                return true;
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Failed to configure interrupt");
+                ESP_LOGW(TAG, "Failed to configure interrupt register");
                 return false;
             }
+            
+            ESP_LOGCONFIG(TAG, "Interrupt register configured (active low, data ready)");
+            
+            // Set up interrupt pin if configured
+            if (this->interrupt_pin_ != nullptr)
+            {
+                this->interrupt_pin_->setup();
+                // Input only - sensor has push-pull output (active low)
+                this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT);
+                this->interrupt_pin_->attach_interrupt(
+                    XensivPasCO2I2C::gpio_intr_,
+                    this,
+                    gpio::INTERRUPT_FALLING_EDGE // Active low interrupt
+                );
+                ESP_LOGCONFIG(TAG, "  Interrupt GPIO pin configured (active low)");
+            }
+            
+            return true;
         }
 
         bool XensivPasCO2I2C::update_operation_mode_()
