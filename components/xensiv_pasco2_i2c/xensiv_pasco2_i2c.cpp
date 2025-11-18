@@ -225,7 +225,11 @@ namespace esphome
                         uint8_t co2ppm_l = co2_ppm_val[1];
                         int16_t co2_raw = (static_cast<int16_t>(co2ppm_h) << 8) | co2ppm_l;
                         this->co2_ppm_ = static_cast<float>(co2_raw);
-                        this->publish_state(this->co2_ppm_);
+                        
+                        if (this->co2_sensor_ != nullptr)
+                        {
+                            this->co2_sensor_->publish_state(this->co2_ppm_);
+                        }
                     }
                     else
                     {
@@ -253,7 +257,10 @@ namespace esphome
                 ESP_LOGE(TAG, "Communication with PASCO2 failed!");
             }
             
-            LOG_SENSOR("  ", "CO2 Sensor", this);
+            if (this->co2_sensor_ != nullptr)
+            {
+                LOG_SENSOR("  ", "CO2 Sensor", this->co2_sensor_);
+            }
             
             if (this->interrupt_pin_ != nullptr)
             {

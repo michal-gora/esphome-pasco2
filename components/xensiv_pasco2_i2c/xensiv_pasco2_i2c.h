@@ -11,7 +11,7 @@ namespace esphome
   namespace xensiv_pasco2_i2c
   {
 
-    class XensivPasCO2I2C : public Component, public i2c::I2CDevice, public sensor::Sensor
+    class XensivPasCO2I2C : public Component, public i2c::I2CDevice
     {
     public:
       void setup() override;
@@ -19,15 +19,17 @@ namespace esphome
       void dump_config() override;
       void read_co2_ppm();
 
+      void set_co2_sensor(sensor::Sensor *co2_sensor) { co2_sensor_ = co2_sensor; }
       void set_interrupt_pin(InternalGPIOPin *pin) { interrupt_pin_ = pin; }
       void set_sensor_rate_value(int16_t rate) { sensor_rate_ = rate; }
-      void set_operation_mode(bool mode) { continuous_operation_mode_ = mode; } // TODO
+      void set_operation_mode(bool mode) { continuous_operation_mode_ = mode; }
       bool measure_now();
       
       protected:
       static void gpio_intr_(XensivPasCO2I2C *arg);
       static void setup_sensor_(XensivPasCO2I2C *arg);
       
+      sensor::Sensor *co2_sensor_{nullptr};
       float co2_ppm_{0.0f};
       uint16_t version_{2};
       int16_t sensor_rate_{10}; // Default rate in seconds
